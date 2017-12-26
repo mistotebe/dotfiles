@@ -1,0 +1,96 @@
+#!/bin/bash
+# fluxbox startup-script:
+#
+# Lines starting with a '#' are ignored.
+
+# You can set your favourite wallpaper here if you don't want
+# to do it from your style.
+#
+# fbsetbg -f /home/kuzniko/pictures/wallpaper.png
+#
+# This sets a black background
+
+# /usr/bin/fbsetroot -solid black
+# (sleep 3 && fbsetbg -f ~/Media/wallpaper/Kyoko_Wallpaper_by_donia.jpg) &
+fbsetbg -a /usr/share/awesome/themes/default/background.png
+
+# This shows the fluxbox-splash-screen
+# fbsetbg -C /usr/share/fluxbox/splash.jpg
+
+# Other examples. Check man xset for details.
+#
+# Turn off beeps:
+# xset -b
+#
+# Increase the keyboard repeat-rate:
+# xset r rate 195 35
+#
+# Your own fonts-dir:
+# xset +fp "/home/kuzniko/.fonts"
+#
+# Your favourite mouse cursor:
+# xsetroot -cursor_name right_ptr
+#
+# Change your keymap:
+# xmodmap "/home/kuzniko/.Xmodmap"
+
+#if proxied; then
+#    dconf write /system/proxy/mode '"auto"'
+#    #dconf write /apps/liferea/proxy/detect-mode 0
+#    sed -i -e "/proxy-id/s,>[^<]*</,>a0</," ~/.config/psi/profiles/default/accounts.xml
+#
+#    export http_proxy="http://ng-dpx01.intinfra.com:3128/"
+#    export https_proxy="$http_proxy"
+#
+#    krb5-auth-dialog &
+#else
+#    dconf write /system/proxy/mode '"none"'
+#    #dconf write /apps/liferea/proxy/detect-mode 1
+#    sed -i -e "/proxy-id/s,>[^<]*</,></," ~/.config/psi/profiles/default/accounts.xml
+#fi
+
+#export TZ=":Europe/Prague"
+# we should umount the directory before we try mounting over it (think X restart)
+fusermount -u -z ~/remote 2>/dev/null
+charging && afuse \
+    -o populate_root_command="sshfs_lister" \
+    -o mount_template="sshfs -o workaround=rename -o follow_symlinks %r:/ %m" \
+    -o unmount_template="fusermount -u -z %m" \
+    -o timeout=60 \
+    ~/remote
+
+# Applications you want to run with fluxbox.
+# MAKE SURE THAT APPS THAT KEEP RUNNING HAVE AN ''&'' AT THE END.
+#
+# unclutter -idle 2 &
+# wmnd &
+# wmsmixer -w &
+# idesk &
+if nm-online -x -q; then
+    krb5-auth-dialog &
+fi
+if charging; then
+#    gnome-settings-daemon &
+    nm-applet &
+    #liferea &
+    psi &
+fi
+unset GNOME_KEYRING_CONTROL GNOME_KEYRING_PID
+
+#if [ $(xrandr | grep -c "\<connected\>") -eq 2 ]; then
+#    xrandr --output LVDS1 --auto --output HDMI2 --auto --primary --left-of LVDS1
+#fi
+
+#xterm -e screen -dR -S default &
+tmux has-session || {
+    tmux new-session -s "base" -d
+    } &&
+        xterm -e tmux attach &
+xmodmap "$HOME/.Xmodmap"
+setxkbmap -option grp:alts_toggle
+
+# And last but not least we start fluxbox.
+# Because it is the last app you have to run it with ''exec'' before it.
+exec /usr/bin/awesome
+# or if you want to keep a log:
+# exec /usr/bin/fluxbox -log "/home/kuzniko/.fluxbox/log"

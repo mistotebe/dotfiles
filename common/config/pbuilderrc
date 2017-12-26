@@ -1,0 +1,23 @@
+PDEBUILD_PBUILDER=cowbuilder
+BUILDRESULT=..
+#MIRRORSITE=http://localhost:3142/ftp.cz.debian.org/debian/
+
+EXTRAPACKAGES="eatmydata ccache"
+export CCACHE_DIR="/var/cache/pbuilder/ccache"
+export PATH="/usr/lib/ccache:${PATH}"
+
+if [ -n "$DIST" ]; then
+    DISTRIBUTION="${DISTRIBUTION:-$DIST}"
+    DEBBUILDOPTS="-sa"
+fi
+BASEPATH="/var/cache/pbuilder/base${DISTRIBUTION:+-$DISTRIBUTION}.cow/"
+BINDMOUNTS="${CCACHE_DIR}"
+
+if [ -z "$LD_PRELOAD" ]; then
+    LD_PRELOAD=libeatmydata.so
+else
+    LD_PRELOAD="$LD_PRELOAD":libeatmydata.so
+fi
+export LD_PRELOAD
+
+AUTO_DEBSIGN=yes

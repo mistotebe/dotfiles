@@ -1,0 +1,65 @@
+#!/bin/bash
+
+print_status()
+{
+    BATTERY=$(acpi -b | grep -o "[[:digit:]]*%")
+    number=${BATTERY%\%}
+    if acpi -a | grep -q off || { test -n "$number" && { test "$number" -le 50 || test "$number" -ge 90; }; }; then
+        if test "$number" -gt 75; then
+            COLOR="$TOP"
+        elif test "$number" -gt 50; then
+            COLOR="$HIGH"
+        elif test "$number" -gt 25; then
+            COLOR="$MED"
+        else
+            COLOR="$LOW"
+        fi
+        if acpi -a | grep -q off; then
+            PREFIX="$COLOR "
+        else
+            PREFIX="$CHARGING$COLOR"
+        fi
+
+        echo "$PREFIX$BATTERY$CLEAR"
+    fi
+}
+
+client=${1-screen}
+persistent=${2-no}
+
+case $client in
+    screen*)
+        LOW="{= rk}"
+        MED="{= ky}"
+        HIGH="{= kg}"
+        TOP="{= gk}"
+        CHARGING="{= kg}▲{-}";
+        CLEAR="{-}";;
+    tmux*)
+        LOW="#[fg=black,bg=red]"
+        MED="#[fg=yellow]"
+        HIGH="#[fg=green]"
+        TOP="#[fg=black,bg=green]"
+        CHARGING="#[fg=green]▲#[default]";
+        CLEAR="#[default]";;
+    *)
+        ;;
+esac
+
+if test "$persistent" = persistent; then
+    # as of now, persistent mode is broken:
+    # 1. two persistent scripts trigger each other by calls to acpi
+    #    and there is no way to distinguish this from a kernel write
+    #    (which emits an access, not write)
+    # 2. after plugging a power cord, no message is printed after
+    #    power level reaches at least half, meaning that the message
+    #    stays there indefinitely (can be solved by emitting a blank
+    #    line, but 1. is more pressing)
+    # 3. on top of all that, tmux does not support persistent mode,
+    #    only screen does
+    #while inotifywait /sys/class/power_supply/BAT0/charge_now -e access -qq; do
+        print_status;
+    #done;
+else
+    print_status;
+fi

@@ -1,0 +1,36 @@
+# This is an automatically generated file.
+# Please see <file:/usr/share/doc/menu/README> for information.
+
+# to use your own menu, copy this to ~/.fluxbox/menu, then edit
+# ~/.fluxbox/init and change the session.menuFile path to ~/.fluxbox/menu
+
+[begin] (Fluxbox)
+
+include-menu-defs
+
+   [exec] (Xterm) {xterm -tn xterm-256color}
+   [submenu] (Apps) {Aplikace}
+      [exec] (Vimperator) {firefox}
+      [exec] (Chromium) {chromium --proxy-auto-detect}
+#      [exec] (Opera) {opera}
+      [exec] (Psi) {psi}
+      [exec] (Pidgin) {pidgin}
+      [exec] (ThunderBird) {thunderbird}
+#      [exec] (Terminal services) {tsclient}
+      [exec] (Liferea) {liferea}
+      [exec] (Quod Libet) {quodlibet}
+      [exec] (Windows) {gvncviewer localhost:10}
+   [end]
+   [config] (Configuration)
+   [submenu] (Styles) {}
+      [stylesdir] (/usr/share/fluxbox/styles)
+      [stylesdir] (~/.fluxbox/styles)
+   [end]
+   [workspaces] (Workspaces)
+   [separator]
+   [reconfig] (Reconfigure)
+   [restart] (Restart)
+   [restart] (Switch to Awesomewm) {awesome}
+   [exit] (Exit)
+
+[end]

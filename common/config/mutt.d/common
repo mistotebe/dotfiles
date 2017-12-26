@@ -1,0 +1,152 @@
+set from="Ondřej Kuzník <ondra@mistotebe.net>"
+set pgp_use_gpg_agent
+
+set folder="~/.maildir"
+set spoolfile="~/.maildir"
+set mask="!^\\.[^.]"
+set mbox="~/.maildir"
+set record="+.sent"
+set postponed="+.postponed"
+
+set header_cache="~/.mutt_cache"
+set maildir_header_cache_verify
+
+#set smtp_url="smtp://ondra@moya.mistotebe.net"
+set smtp_authenticators="gssapi:digest-md5:cram-md5"
+set ssl_min_dh_prime_bits=1024
+
+set query_command="~/bin/mutt-ldap.pl '%s'"
+bind editor \CN complete-query
+
+set imap_authenticators="gssapi:digest-md5"
+set imap_keepalive=300
+set imap_idle
+set imap_check_subscribed
+#unset imap_passive
+#unset imap_peek
+
+set beep_new=yes
+set postpone=ask-no
+set wait_key=no
+set nomark_old
+set noconfirmappend
+set fcc_clear
+set sort_aux=last-date-received
+set uncollapse_jump
+unset digest_collapse
+
+auto_view text/html
+alternative_order text/plain text/enriched text/html
+
+mime_lookup application/octet-stream
+#set mime_forward=yes
+
+set pager_index_lines=10
+folder-hook . "exec collapse-all"
+
+### mutt sidebar
+
+#
+# Sidebar basics.
+#
+set sidebar_width=30
+set sidebar_visible=yes
+set sidebar_divider_char='┃'
+#set sidebar_sort_method=new
+
+set mail_check_stats=yes
+set sidebar_format="%B%*  %S%?N?(%N)?%?F?[%F]?"
+set sidebar_indent_string=" "
+set sidebar_folder_indent=yes
+set sidebar_short_path=yes
+
+#
+# color of folders with new mail
+#
+color sidebar_new  red default
+
+#
+# ctrl-n, ctrl-p to navigate to the next/previous mailbox with unread mail.
+# ctrl-o to open the selected folder.
+#
+bind index "[5;5~" sidebar-prev
+bind pager "[5;5~" sidebar-prev
+bind index \CP sidebar-prev-new
+bind pager \CP sidebar-prev-new
+
+bind index "[6;5~" sidebar-next
+bind pager "[6;5~" sidebar-next
+bind index \CN sidebar-next-new
+bind pager \CN sidebar-next-new
+
+bind pager "[27;5;13~" sidebar-open
+bind index "[27;5;13~" sidebar-open
+bind index <space> sidebar-open
+bind pager \CO sidebar-open
+bind index \CO sidebar-open
+
+bind pager "[1;5H" sidebar-page-up
+bind index "[1;5H" sidebar-page-up
+
+bind pager "[1;5F" sidebar-page-down
+bind index "[1;5F" sidebar-page-down
+
+#
+# Toggle sidebar visibility
+#
+macro index b '<enter-command>toggle sidebar_visible<enter><refresh>'
+macro pager b '<enter-command>toggle sidebar_visible<enter>'
+
+bind index B bounce-message
+
+### end of mutt sidebar
+
+bind pager <Space> half-down
+bind pager <BackSpace> half-up
+
+macro index X '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --spam'
+macro index H '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --good'
+macro pager X '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --spam'
+macro pager H '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --good'
+
+alternates '@mistotebe\.net$' '^mistotebe@gmail\.com$' '^cargill@atlas\.cz$' '^ondrej\.kuznik@atlas\.cz$' '^ondrej\.kuznik@credativ\.co\.uk$' '^okuznik@symas.com$'
+
+#mailboxes ! `find ~/.mail -type f -printf '%p '`
+#mailboxes ! `find ~/.maildir -name .spam -prune -o -type d -name "cur" -printf "'%h' "`
+mailboxes imaps://ondrej.kuznik@atlas.cz@imap.centrum.cz/
+mailboxes imaps://cargill@atlas.cz@imap.centrum.cz/
+mailboxes imap://ondra@dodo.mistotebe.net/
+mailboxes imaps://mistotebe@imap.gmail.com/
+
+# index colours, last match applies
+color index cyan black ~g
+color index color15 color234 ~v
+# unread or collapsed thread with unread messages only
+color index default green "~O | ~N"
+color index default color70 "(~v ~(~O)) | (~v ~(~N))"
+# collapsed thread with read and unread messages
+color index green black "~v (~(~N) | ~(~O)) ~(~R)"
+color index yellow black ~T
+color index brightblack black ~D
+color index red black "~F | (~v ~(~F))"
+
+# Highlights inside the body of a message.
+
+# URLs
+color body brightblue  black "(http|https|ftp|news|telnet|finger)://[^ \">\t\r\n]*"
+color body brightblue  black "mailto:[-a-z_0-9.+]+@[-a-z_0-9.]+"
+color body brightblue  black "news:[^ \">\t\r\n]*"
+mono  body bold              "(http|https|ftp|news|telnet|finger)://[^ \">\t\r\n]*"
+mono  body bold              "mailto:[-a-z_0-9.+]+@[-a-z_0-9.]+"
+mono  body bold              "news:[^ \">\t\r\n]*"
+
+# email addresses
+color body brightblue  black "[-a-z_0-9.%$+]+@[-a-z_0-9.]+\\.[-a-z][-a-z]+"
+mono  body bold              "[-a-z_0-9.%$+]+@[-a-z_0-9.]+\\.[-a-z][-a-z]+"
+
+# Various smilies and the like
+color body brightgreen black " [;:]-*[)>(<|*]"                                   # :-) etc...
+color body brightblue  black "(^|[[:space:]])\\*[^[:space:]]+\\*([[:space:]]|$)" # *Bold* text.
+color body brightblue  black "(^|[[:space:]])_[^[:space:]]+_([[:space:]]|$)"     # _Underlined_ text.
+color body brightblue  black "(^|[[:space:]])/[^[:space:]]+/([[:space:]]|$)"     # /Italic/ text.
+

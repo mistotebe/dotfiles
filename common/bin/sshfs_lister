@@ -1,0 +1,17 @@
+#!/bin/bash
+
+list_file="${HOME}/.ssh/host_list"
+
+update_list() {
+    echo -n >"$list_file"
+    hosts=( $(sed -n -e '/^\s*host\>/Is/^\s*host\s*//Ip' ~/.ssh/config) )
+    for host in ${hosts[@]}; do
+        [[ "$host" =~ '*' ]] || echo "$host" >> "$list_file"
+    done
+}
+
+if [ ! -e "$list_file" ] || [ ~/.ssh/config -nt "$list_file" ]; then
+    update_list
+fi
+
+cat "$list_file"

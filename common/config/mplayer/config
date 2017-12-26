@@ -1,0 +1,6 @@
+subcp=enca:cs:utf-8
+fs=yes
+zoom=yes
+sub-fuzziness=1
+
+af=scaletempo

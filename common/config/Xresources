@@ -1,0 +1,11 @@
+*VT100*eightBitControl: false
+*VT100*eightBitInput:   false
+*VT100*eightBitOutput:  true
+*VT100*utf8:            1
+*VT100*underLine:       true
+XTerm*termName:         xterm-256color
+XTerm*allowTcapOps:     true
+XTerm*modifyOtherKeys:  1
+
+XTerm*VT100.translations: #override <Btn1Up>: select-end(PRIMARY, CLIPBOARD, CUT_BUFFER0)
+

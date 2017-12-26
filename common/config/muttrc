@@ -1,0 +1,8 @@
+source ~/.mutt.d/common
+
+mailboxes ! `find ~/.maildir -name .spam -prune -o -type d -name "cur" -printf "'%h' "`
+
+set from="Ondřej Kuzník <ondra@mistotebe.net>"
+set folder=imap://ondra@dodo.mistotebe.net/
+
+set smtp_url="smtp://ondra@moya.mistotebe.net"

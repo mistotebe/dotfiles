@@ -1,0 +1,13 @@
+keycode 166 = Prior
+keycode 167 = Next
+
+!original mappings
+!keycode 110 = Home NoSymbol Home
+!keycode 112 = Prior NoSymbol Prior
+!keycode 115 = End NoSymbol End
+!keycode 117 = Next NoSymbol Next
+
+keycode 110 = Home NoSymbol Home
+keycode 112 = End NoSymbol End
+keycode 117 = Prior NoSymbol Prior
+keycode 115 = Next NoSymbol Next

@@ -1,0 +1,13 @@
+set history save on
+set history size 1000
+set history remove-duplicates unlimited
+set history filename ~/.gdb_history
+
+add-auto-load-safe-path ~/.gdb/auto-load
+add-auto-load-scripts-directory ~/.gdb/auto-load
+
+handle SIGPIPE nostop
+
+#set scheduler-locking step
+
+source ~/.gdb/gdb.py

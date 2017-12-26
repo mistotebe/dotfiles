@@ -1,0 +1,37 @@
+term screen-256color
+
+vbell off
+defutf8 on
+altscreen on
+autodetach on
+#defmonitor on
+startup_message off
+defscrollback 2048
+
+activity "%"
+sorendition yk
+#attrcolor b ".I"
+#termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
+defbce "on"
+
+#termcapinfo xterm|xterms|xs|rxvt ti@:te@
+bind ^w focus
+bind q only
+
+bind    -k kl prev
+bind -a -k kl prev
+bind    -k kr next
+bind -a -k kr next
+
+#backtick 1 30 30 ${HOME}/bin/battery screen
+#hardstatus alwayslastline "%{+ bk}%H: %{-}%{+ wk}%-Lw%{=u dW}%50>%n%f* %t%{-}%+Lw%< %=%1`"
+hardstatus alwayslastline "%{+ bk}%H: %{-}%{+ wk}%-Lw%{=u dW}%50>%n%f* %t%{-}%+Lw%<"
+
+shelltitle "% |$SHELL"
+
+#now startup our favourite windows
+chdir
+screen -t "General work"
+screen -t "irc" irssi
+screen -t "mail" mutt
+screen

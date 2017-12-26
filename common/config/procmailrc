@@ -1,0 +1,71 @@
+MAILDIR="$HOME/.maildir/"
+DEFAULT="$HOME/.maildir/"
+
+:0
+* !^Subject:.*$
+* !^To:.*$
+* !^(From|Sender):.*$
+.spam/
+
+:0fw: crm114.lock
+| /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114
+
+:0:
+* ^X-CRM114-Status: SPAM.*
+.spam/
+
+:0
+* !^X-Original-To: ondra(+[-+a-z_]*)?@mistotebe.net$
+.other_account/
+
+:0
+* ^List-Id:.*<tmux-users\.
+.lists.tmux-users/
+
+:0
+* ^List-Id:.*<rugby\.
+.lists.rugby-lug/
+
+:0
+* ^List-Id:.*<dnssec-validator-users\.
+.lists.dnssec/
+
+:0
+* ^List-Id:.*<openldap-technical\.
+.lists.openldap-technical/
+
+:0
+* ^List-Id:.*<openldap-bugs\.
+.lists.openldap-bugs/
+
+:0
+* ^List-Id:.*<openldap-devel\.
+.lists.openldap-devel/
+
+:0
+* ^List-Id:.*<ldapext\.
+.lists.ldapext/
+
+:0
+* ^List-Id:.*<sslh\.
+.lists.sslh/
+
+:0
+* ^List-Id:.*<server\.hinca\.net>$
+.lists.moya/
+
+:0
+* ^List-Id:.*\.OCA\.github\.com>$
+.lists.github.OCA/
+
+:0
+* ^List-Id:.*\.odoo\.github\.com>$
+.lists.github.odoo/
+
+:0
+* ^List-Id:.*\.github\.com>$
+.lists.github/
+
+:0
+* ^Subject:.*Logwatch
+.logwatch/

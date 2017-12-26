@@ -1,0 +1,29 @@
+#!/bin/bash
+
+message_string='%a %x'
+basedir="$HOME/Work/diary"
+
+original_date="$1"
+
+date_string() {
+    date +"$message_string" --date="$1"
+}
+
+date="@$(date +%s "${original_date+--date=$original_date}")"
+name="$(date +%Y/%m/%d --date="$date")"
+
+mkdir -p "$basedir/$name"
+cd "$basedir/$name"
+
+"$EDITOR" "diary.txt"
+cd "$basedir"
+
+new_date="@$(date +%s)"
+if [ -z "${original_date}" ] && [ "$(date_string "${date}")" != "$(date_string "${new_date}")" ]; then
+    message="$(date_string "${date}") - $(date_string "${new_date}")"
+else
+    message="$(date_string "${date}")"
+fi
+
+git add .
+git commit -e -m "${message}"
