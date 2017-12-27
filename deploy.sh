@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+shopt -s nullglob
 shopt -s globstar
 
 log() {
