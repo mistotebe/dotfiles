@@ -20,7 +20,7 @@ deploy_files() {
 	pushd "$dir" >/dev/null
 
 	for d in **/; do
-		mkdir -p "$dest/$d"
+		mkdir -p "$dest/${prefix}$d"
 	done
 	for f in **/*; do
 		if ! [ -e "$dest/${prefix}$f" ]; then
