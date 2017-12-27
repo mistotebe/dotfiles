@@ -44,7 +44,9 @@ sync_files() {
 	pushd "$dir" >/dev/null
 
 	for f in **/*; do
-		if [ -f "$dest/${prefix}$f" ] && cmp -s "$f" "$dest/${prefix}$f"; then
+		if ! [ -h "$dest/${prefix}$f" ] \
+				&& [ -f "$dest/${prefix}$f" ] \
+				&& cmp -s "$f" "$dest/${prefix}$f" ; then
 			ln -s -f -v $(readlink -f "$f") "$dest/${prefix}$f"
 		fi
 	done
