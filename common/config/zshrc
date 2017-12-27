@@ -81,4 +81,4 @@ fi
 
 if [ -n "$TMUX" ]; then refreshTmuxEnvironment; fi
 
-fortune
+which fortune >/dev/null && fortune

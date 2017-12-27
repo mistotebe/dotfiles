@@ -1,3 +1,3 @@
 # autojump launches python for each command, expensive when on battery
 
-source /usr/share/autojump/autojump.zsh
+[ -e /usr/share/autojump/autojump.zsh ] && source /usr/share/autojump/autojump.zsh
