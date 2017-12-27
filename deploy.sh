@@ -24,7 +24,7 @@ deploy_files() {
 	done
 	for f in **/*; do
 		if ! [ -e "$dest/${prefix}$f" ]; then
-			log ln -s -v $(readlink -f "$f") "$dest/${prefix}$f"
+			ln -s -v $(readlink -f "$f") "$dest/${prefix}$f"
 		fi
 	done
 	popd >/dev/null
