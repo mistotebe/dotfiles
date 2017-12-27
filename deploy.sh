@@ -31,8 +31,29 @@ deploy_files() {
 	popd >/dev/null
 }
 
-deploy() {
+sync_files() {
 	local dir="$1"
+	local dest="$2"
+	local prefix="${3-.}"
+
+	if ! [ -d "$dir" ]; then
+		log "Skipping '$dir'"
+		return
+	fi
+	log "Syncing '$dir'"
+	pushd "$dir" >/dev/null
+
+	for f in **/*; do
+		if [ -f "$dest/${prefix}$f" ] && cmp -s "$f" "$dest/${prefix}$f"; then
+			ln -s -f -v $(readlink -f "$f") "$dest/${prefix}$f"
+		fi
+	done
+	popd >/dev/null
+}
+
+run() {
+	local mode="$1"
+	local dir="$2"
 	if ! [ -d "$dir" ]; then
 		log "Skipping '$dir'"
 		return
@@ -40,10 +61,15 @@ deploy() {
 	log "Context is '$dir'"
 
 	pushd "$dir" >/dev/null
-	deploy_files bin "$HOME/bin" ""
-	deploy_files config "$HOME" "."
+	"${mode}_files" bin "$HOME/bin" ""
+	"${mode}_files" config "$HOME" "."
 	popd >/dev/null
 }
 
-deploy "local/$(hostname)"
-deploy common
+run deploy "local/$(hostname)"
+run deploy common
+
+if [ "$1" = "sync" ]; then
+	run sync "local/$(hostname)"
+	run sync common
+fi
