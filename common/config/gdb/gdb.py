@@ -16,16 +16,17 @@ class ObjFileHandler(object):
     def __call__(self, event):
         name = event.new_objfile.filename
         basename = os.path.basename(name)
-        #print("new objfile loaded: basename: %s, fullname: %s" % (basename, name))
-        if basename not in self.loaded_modules:
+
+        mod = self.loaded_modules.get(basename)
+        if not mod:
             try:
                 mod = import_module("auto_load." + basename)
                 self.loaded_modules[basename] = mod
-                f = getattr(mod, "new_objfile")
-                if f:
-                    f(event)
             except ModuleNotFoundError as e:
-                pass
+                return
+        f = getattr(mod, "new_objfile")
+        if f:
+            f(event)
 
 new_objfile_handler = ObjFileHandler()
 
