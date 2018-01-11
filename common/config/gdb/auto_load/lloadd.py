@@ -3,6 +3,24 @@ from gdb.FrameDecorator import FrameDecorator
 
 print("Loading lloadd support")
 
+class GDBArgument:
+    def __init__(self, name, value):
+        self._name = name
+        self._value = value
+
+    def symbol(self):
+        return self._name
+
+    def value(self):
+        return self._value
+
+class SavingDecorator(FrameDecorator):
+    def __init__(self, frame, frame_iterator):
+        super(SavingDecorator, self).__init__(frame)
+        self.frame = frame
+        self.frame_iterator = frame_iterator
+        self.thread = gdb.selected_thread()
+
 def ignore(frame, frame_iterator):
     return None
 
@@ -14,13 +32,21 @@ def set_thread_name(name, decorator=None):
         return frame
     return f
 
-class LockDecorator(FrameDecorator):
-    def __init__(self, frame, frame_iterator):
-        super(LockDecorator, self).__init__(frame)
-        self.frame = frame
-        self.frame_iterator = frame_iterator
-        self.thread = gdb.selected_thread()
+class AssertDecorator(SavingDecorator):
+    def function(self):
+        return "failing assertion"
 
+    def frame_args(self):
+        assertion = self.inferior_frame().read_var('assertion')
+        return [GDBArgument('assertion', assertion)]
+
+    def filename(self):
+        pass
+
+    def line(self):
+        pass
+
+class LockDecorator(SavingDecorator):
     def function(self):
         name = original = super(LockDecorator, self).function()
 
@@ -48,6 +74,11 @@ decorators = {
 
     '__lll_lock_wait': ignore,
     '__GI___pthread_mutex_lock': ignore,
+
+    '__GI_raise': ignore,
+    '__GI_abort': ignore,
+    '__assert_fail_base': ignore,
+    '__GI___assert_fail': AssertDecorator,
 
     'futex_wait_cancelable': ignore,
     '__pthread_cond_wait': ignore,
