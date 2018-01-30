@@ -18,6 +18,8 @@ class ObjFileHandler(object):
     def __call__(self, event):
         name = event.new_objfile.filename
         basename = os.path.basename(name)
+        basename = os.path.splitext(basename)[0]
+        basename = basename.split('-')[0]
 
         mod = self.loaded_modules.get(basename)
         if not mod:

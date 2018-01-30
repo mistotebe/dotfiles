@@ -6,7 +6,7 @@ set history filename ~/.gdb_history
 add-auto-load-safe-path ~/.gdb/auto-load
 add-auto-load-scripts-directory ~/.gdb/auto-load
 
-handle SIGPIPE nostop
+handle SIGPIPE noprint
 
 #set scheduler-locking step
 

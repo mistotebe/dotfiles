@@ -74,6 +74,13 @@ decorators = {
 
     #'ldap_pvt_thread_cond_wait': ignore,
 
+    '__GI_epoll_pwait': ignore,
+    'epoll_dispatch': ignore,
+
+    'event_persist_closure': ignore,
+    'event_process_active_single_queue': ignore,
+    'event_process_active': ignore,
+
     '__lll_lock_wait': ignore,
     '__GI___pthread_mutex_lock': ignore,
 
