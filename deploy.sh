@@ -63,6 +63,7 @@ run() {
 	log "Context is '$dir'"
 
 	pushd "$dir" >/dev/null
+	mkdir -p "$HOME/bin"
 	"${mode}_files" bin "$HOME/bin" ""
 	"${mode}_files" config "$HOME" "."
 	popd >/dev/null
