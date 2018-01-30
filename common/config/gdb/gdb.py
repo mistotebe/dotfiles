@@ -8,6 +8,7 @@ print("python version is "+sys.version)
 
 sys.path.append(os.path.expanduser('~/.gdb'))
 
+import pretty_printers
 import deadlock
 
 class ObjFileHandler(object):
@@ -35,5 +36,7 @@ class ObjFileHandler(object):
 new_objfile_handler = ObjFileHandler()
 
 gdb.events.new_objfile.connect(new_objfile_handler)
+
+pretty_printers.register()
 
 deadlock.CommandDeadlockPrint()
