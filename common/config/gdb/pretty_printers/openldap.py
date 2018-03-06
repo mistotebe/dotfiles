@@ -3,6 +3,8 @@
 import gdb
 import gdb.printing
 
+from pretty_printers.common import CollectionPrinter
+
 class LockPrinter:
     """Backup pretty printer for pthread_lock."""
 
@@ -91,7 +93,7 @@ def finish_printer(printer):
 
 def register(objfile):
     print("registering OpenLDAP printers")
-    printer = gdb.printing.RegexpCollectionPrettyPrinter('OpenLDAP')
+    printer = CollectionPrinter('OpenLDAP')
 
     printer.add_printer('BerValue', r'^berval$',
                         BerValuePrinter)
