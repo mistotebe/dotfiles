@@ -88,6 +88,39 @@ class BerValuePrinter:
                 # if we said it's a string, gdb would escape it and put quotes around
                 return 'BVNULL'
 
+class AttrDescPrinter:
+    """Pretty printer for AttributeDescription"""
+
+    def __init__(self, value):
+        self.ad = value
+        self.name = value['ad_cname']
+
+    def to_string(self):
+        return self.name
+
+class OCPrinter:
+    """Pretty printer for ObjectClass"""
+
+    def __init__(self, oc):
+        self.oc = oc
+
+    def to_string(self):
+        return self.oc['soc_cname']
+
+class EntryPrinter:
+    """Pretty printer for Entry"""
+
+    def __init__(self, e):
+        self.e = e
+
+    def to_string(self):
+        return self.e['e_name']
+
+    def children(self):
+        return {
+        #    "dn": self.e['e_name'],
+        }.items()
+
 def finish_printer(printer):
     mutex = gdb.lookup_type('pthread_mutex_t')
 
@@ -99,6 +132,16 @@ def register(objfile):
                         BerValuePrinter)
     printer.add_printer('mutex', r'^ldap_pvt_thread_mutex_t$',
                         LockPrinter)
+
+    # pointer printers
+    printer.add_pointer_printer('AttributeDescription',
+                                r'^AttributeDescription$',
+                                AttrDescPrinter)
+    printer.add_pointer_printer('ObjectClass', r'^ObjectClass$',
+                                OCPrinter)
+    printer.add_pointer_printer('Entry', r'^Entry$',
+                                EntryPrinter)
+
     # register pthread aliases if possible
     gdb.post_event(finish_printer)
 
