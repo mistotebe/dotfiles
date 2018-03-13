@@ -4,7 +4,7 @@ if [ "$TERM" != "dumb" ]; then
     alias ls='ls --color=auto'
 
     for grep_prefix in "" "e" "f" "r"; do
-        alias "${grep_prefix}grep=${grep_prefix}grep --color=auto"
+        alias "${grep_prefix}grep=${grep_prefix}grep -I --color=auto"
     done
     unset grep_prefix
 fi
@@ -16,8 +16,8 @@ alias l='ls -CF'
 
 alias go='xdg-open'
 alias cal='cal -m'
-alias follow='tail -n0 -f'
+alias follow='tail -n0 -F'
 alias diff='diff -u'
-alias ems='emacsclient -nw'
+alias ems='emacsclient -a "" -nw'
 alias dquilt="quilt --quiltrc=${HOME}/.quiltrc-dpkg"
 alias wcdiff="wdiff -w '`tput setaf 1`' -x '`tput sgr0`' -y '`tput setaf 2`' -z '`tput sgr0`'"
