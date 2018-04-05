@@ -88,6 +88,22 @@ class BerValuePrinter:
                 # if we said it's a string, gdb would escape it and put quotes around
                 return 'BVNULL'
 
+class SockAddrPrinter:
+    def __init__(self, value):
+        self.value = value
+        self.family = value['sa_addr']['sa_family']
+        if self.family == AF_UNIX:
+            self.member = 'sa_un_addr'
+        elif self.family == AF_INET:
+            self.member = 'sa_in_addr'
+        elif self.family == AF_INET6:
+            self.member = 'sa_in6_addr'
+        else:
+            self.member = 'sa_addr'
+
+    def to_string(self):
+        return self.value[self.member]
+
 class AttrDescPrinter:
     """Pretty printer for AttributeDescription"""
 
@@ -132,6 +148,7 @@ def register(objfile):
                         BerValuePrinter)
     printer.add_printer('mutex', r'^ldap_pvt_thread_mutex_t$',
                         LockPrinter)
+    printer.add_printer('Sockaddr', r'^Sockaddr$', SockAddrPrinter)
 
     # pointer printers
     printer.add_pointer_printer('AttributeDescription',
