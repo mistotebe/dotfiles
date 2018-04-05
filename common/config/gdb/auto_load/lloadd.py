@@ -67,6 +67,7 @@ class LockDecorator(SavingDecorator):
 
         return name
 
+drop_prefixes = [ '__GI_', '__lll_', '_IO_', '__pthread_' ]
 decorators = {
     'clone': ignore,
     'start_thread': ignore,
@@ -74,27 +75,26 @@ decorators = {
 
     #'ldap_pvt_thread_cond_wait': ignore,
 
-    '__GI_epoll_pwait': ignore,
+    'event_base_loop': ignore,
     'epoll_dispatch': ignore,
+    'lload_base_dispatch': ignore,
+    'lload_start_daemon': ignore,
 
     'event_persist_closure': ignore,
     'event_process_active_single_queue': ignore,
     'event_process_active': ignore,
 
-    '__lll_lock_wait': ignore,
-    '__GI___pthread_mutex_lock': ignore,
-
-    '__GI_raise': ignore,
-    '__GI_abort': ignore,
-    '__assert_fail_base': ignore,
     '__GI___assert_fail': AssertDecorator,
 
     'futex_wait_cancelable': ignore,
-    '__pthread_cond_wait': ignore,
-    '__pthread_cond_wait_common': ignore,
 
     'ldap_pvt_thread_mutex_lock': LockDecorator,
     'ldap_pvt_thread_mutex_trylock': LockDecorator,
+    '__pthread_mutex_cond_lock': LockDecorator,
+
+    'ldap_pvt_thread_pool_submit': ignore,
+
+    'handle_pdus': ignore,
 
 #    'ldap_pvt_thread_rdwr_rlock': RWLockDecorator,
 #    'ldap_pvt_thread_rdwr_rtrylock': RWLockDecorator,
@@ -114,6 +114,11 @@ class LLoadFrameFilter:
             decorator = decorators.get(name)
             if decorator:
                 frame = decorator(frame, frame_iterator)
+            else:
+                for prefix in drop_prefixes:
+                    if name.startswith(prefix):
+                        frame = None
+                        break
             if frame:
                 yield frame
 
