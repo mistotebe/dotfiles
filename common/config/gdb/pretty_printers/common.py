@@ -4,10 +4,16 @@ import gdb
 import gdb.printing
 import gdb.types
 
-class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
-    def __init__(self, *args, **kwargs):
-        super(CollectionPrinter, self).__init__(*args, **kwargs)
+from collections import OrderedDict
 
+class NullPrinter:
+    def __init__(self, val):
+        pass
+
+    def to_string(self):
+        return "NULL"
+
+class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
     class RegexpPointerSubprinter(gdb.printing.RegexpCollectionPrettyPrinter.RegexpSubprinter):
         def __init__(self, name, regexp, gen_printer, pointer=False):
             super(CollectionPrinter.RegexpPointerSubprinter, self).__init__(name, regexp, gen_printer)
@@ -32,6 +38,8 @@ class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
             if printer.enabled and printer.pointer == pointer \
                     and printer.compiled_re.search(typename):
                 #print("Selecting printer", printer.name, "for", "pointer" if pointer else "non-pointer", "type", val.type)
+                if not val:
+                    return NullPrinter(val)
                 return printer.gen_printer(val)
 
         # Fallback to None
@@ -44,3 +52,40 @@ class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
 
     def add_pointer_printer(self, name, regexp, gen_printer):
         return self.add_printer(name, regexp, gen_printer, pointer=True)
+
+class StructPrinter:
+    def __init__(self, value):
+        self.value = value
+
+    def children_dict(self, fields=None):
+        pointer = self.value
+        value = pointer.dereference()
+        result = OrderedDict()
+
+        if fields is None:
+            fields = value.type.fields()
+
+        for field in fields:
+            result[field.name] = value[field.name]
+
+        return result
+
+class AnnotatedStructPrinter(StructPrinter):
+    def children_dict(self, fields=None):
+        result = super().children_dict(fields)
+
+        exclude = getattr(self, 'exclude', [])
+        exclude_false = getattr(self, 'exclude_false', [])
+        short = getattr(self, 'short', [])
+
+        for name in exclude:
+            result.pop(name, None)
+
+        for name in exclude_false:
+            if name in result and not result[name]:
+                del result[name]
+
+        for name in short:
+            result[name] = gdb.default_visualizer(result[name]).to_string()
+
+        return result
