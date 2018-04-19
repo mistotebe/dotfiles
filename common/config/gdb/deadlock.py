@@ -26,7 +26,7 @@ class WaiterEntry(ThreadEntry):
     FLAG_SELF_LOCKED = 1 << 1
 
     def __init__(self, thread):
-        super(WaiterEntry, self).__init__(thread)
+        super().__init__(thread)
 
         self._flags = 0
 
@@ -115,7 +115,7 @@ class CommandDeadlockPrint(gdb.Command):
     """Prints threads that participate in a deadlock"""
 
     def __init__(self):
-        super(CommandDeadlockPrint, self).__init__("deadlock", gdb.COMMAND_USER)
+        super().__init__("deadlock", gdb.COMMAND_USER)
         print("Command 'deadlock' loaded")
 
     def invoke(self, arg, from_tty):

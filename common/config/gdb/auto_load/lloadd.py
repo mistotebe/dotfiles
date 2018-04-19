@@ -18,7 +18,7 @@ class GDBArgument:
 
 class SavingDecorator(FrameDecorator):
     def __init__(self, frame, frame_iterator):
-        super(SavingDecorator, self).__init__(frame)
+        super().__init__(frame)
         self.frame = frame
         self.frame_iterator = frame_iterator
         self.thread = gdb.selected_thread()
@@ -50,7 +50,7 @@ class AssertDecorator(SavingDecorator):
 
 class LockDecorator(SavingDecorator):
     def function(self):
-        name = original = super(LockDecorator, self).function()
+        name = original = super().function()
 
         frame = self.inferior_frame()
         mutex = frame.read_var('mutex')

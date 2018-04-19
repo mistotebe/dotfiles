@@ -16,7 +16,7 @@ class NullPrinter:
 class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
     class RegexpPointerSubprinter(gdb.printing.RegexpCollectionPrettyPrinter.RegexpSubprinter):
         def __init__(self, name, regexp, gen_printer, pointer=False):
-            super(CollectionPrinter.RegexpPointerSubprinter, self).__init__(name, regexp, gen_printer)
+            super().__init__(name, regexp, gen_printer)
             self.pointer = pointer
 
     def __call__(self, val):
