@@ -112,7 +112,18 @@ class LockGraph:
         return thread.root
 
 class CommandDeadlockPrint(gdb.Command):
-    """Prints threads that participate in a deadlock"""
+    """Prints threads that participate in a deadlock, e.g.
+    (gdb) deadlock
+    Cycles:
+    Thread #3 (LWP 26872) in client_destroy() at client.c:544
+            Thread #9 (LWP 27268) in connections_walk() at connection.c:387
+                    deadlock from root
+                    Thread #4 (LWP 26873) in client_init() at client.c:414
+
+    In the above, thread #3 is blocked waiting on a lock that thread #9 holds
+    and vice versa. Thread #4 is blocked waiting on thread #9 to unlock
+    something as well.
+    """
 
     def __init__(self):
         super().__init__("deadlock", gdb.COMMAND_USER)
