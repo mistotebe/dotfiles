@@ -124,7 +124,7 @@ class LLoadFrameFilter:
                 frame = decorator(frame, frame_iterator)
             else:
                 for prefix in drop_prefixes:
-                    if name.startswith(prefix):
+                    if name and name.startswith(prefix):
                         frame = None
                         break
             if frame:
