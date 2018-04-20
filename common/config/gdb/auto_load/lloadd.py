@@ -119,12 +119,19 @@ class LLoadFrameFilter:
     def filter(self, frame_iterator):
         for frame in frame_iterator:
             name = frame.inferior_frame().name()
+            if not name:
+                yield frame
+                continue
+
+            if name.find("@@") >= 0:
+                name = name[:name.find('@@')]
+
             decorator = decorators.get(name)
             if decorator:
                 frame = decorator(frame, frame_iterator)
             else:
                 for prefix in drop_prefixes:
-                    if name and name.startswith(prefix):
+                    if name.startswith(prefix):
                         frame = None
                         break
             if frame:
