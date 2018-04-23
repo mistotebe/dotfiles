@@ -7,6 +7,19 @@ import socket
 
 from pretty_printers.common import CollectionPrinter
 
+class TimevalPrinter:
+    """Pretty printer for timeval."""
+    def __init__(self, value):
+        self.sec = value['tv_sec']
+        self.usec = value['tv_usec']
+        self.tv = self.sec + self.usec / 1000000.0
+
+    def to_string(self):
+        if self.usec:
+            return "{}s".format(self.tv)
+        else:
+            return "{}s".format(self.sec)
+
 AF_UNIX = 1
 AF_INET = 2
 AF_INET6 = 10
@@ -64,6 +77,7 @@ class SockAddrPrinterUnix:
 def register(objfile):
     printer = CollectionPrinter('POSIX')
 
+    printer.add_printer('struct timeval', r'^timeval$', TimevalPrinter)
     printer.add_printer('sockaddr_in', r'^sockaddr_in$', SockAddrPrinterIPv4)
     printer.add_printer('sockaddr_in6', r'^sockaddr_in6$', SockAddrPrinterIPv6)
     printer.add_printer('sockaddr_un', r'^sockaddr_un$', SockAddrPrinterUnix)
