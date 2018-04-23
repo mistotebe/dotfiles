@@ -30,7 +30,10 @@ class LockPrinter:
         if self.kind == -1:
             return "Invalid"
         if self.locked:
-            return "Locked by LWP {self.owner}".format(self=self)
+            if self.kind == 1:
+                return "Locked by LWP {self.owner}, depth={self.lock}".format(self=self)
+            else:
+                return "Locked by LWP {self.owner}".format(self=self)
         return "Unlocked"
 
 class BerValuePrinter:

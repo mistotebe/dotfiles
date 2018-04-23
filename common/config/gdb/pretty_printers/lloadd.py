@@ -81,7 +81,8 @@ class ConnectionPrinter(AnnotatedStructPrinter):
     exclude = ['c_connid', 'c_destroy', 'c_txn', 'c_sb', 'c_starttime',
             'c_activitytime', 'c_peer_name', 'c_vc_cookie', 'c_pdu_cb',
             'c_needs_tls_accept', 'c_counters', 'c_private']
-    exclude_false = ['c_pin_id', 'c_currentber', 'c_pendingber']
+    exclude_false = ['c_read_timeout', 'c_pin_id', 'c_currentber',
+            'c_pendingber']
     short = ['c_read_event', 'c_write_event']
 
     def conn_type(self, value=None):
