@@ -1,5 +1,7 @@
-unlet! skip_defaults_vim
-source $VIMRUNTIME/defaults.vim
+if filereadable($VIMRUNTIME."/defaults.vim")
+    unlet! skip_defaults_vim
+    source $VIMRUNTIME/defaults.vim
+endif
 
 if !has('nvim')
     if $TERM =~ 'screen'
