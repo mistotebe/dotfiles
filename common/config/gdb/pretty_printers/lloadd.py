@@ -143,6 +143,66 @@ class ConnectionPrinter(AnnotatedStructPrinter):
 
         return result.items()
 
+LDAP_MSG_TAGS = {
+    0x60: "Bind request",
+    0x42: "Unbind request",
+    0x63: "Search request",
+    0x66: "Modify request",
+    0x68: "Add request",
+    0x4a: "Delete request",
+    0x6c: "ModRDN request",
+    0x6e: "Compare request",
+    0x50: "Abandon request",
+    0x77: "Extended request",
+
+    0x61: "Bind response",
+    0x64: "Search entry",
+    0x73: "Search reference",
+    0x65: "Search result",
+    0x67: "Modify response",
+    0x69: "Add response",
+    0x6b: "Delete response",
+    0x6d: "ModRDN response",
+    0x6f: "Compare response",
+    0x78: "Extended response",
+    0x79: "Intermediate response",
+}
+
+class OperationPrinter(AnnotatedStructPrinter):
+    exclude = ['o_ber', 'o_request']
+    exclude_false = ['o_saved_msgid', 'o_last_response', 'o_freeing',
+            'o_pin_id']
+    short = ['o_client', 'o_upstream']
+
+    def to_string(self):
+        tag = int(self.value['o_tag'])
+        name = LDAP_MSG_TAGS.get(tag, "Unknown message")
+
+        client_msgid = self.value['o_client_msgid'] or self.value['o_saved_msgid']
+
+        text = "{} msgid=({}, {})".format(name, client_msgid, self.value['o_upstream_msgid'])
+        if self.value['o_pin_id']:
+            text += " pin={}".format(self.value['o_pin_id'])
+
+        return text
+
+    def children(self):
+        result = self.children_dict()
+
+        for side in ['o_client', 'o_upstream']:
+            if str(result[side]) != "NULL":
+                result.pop(side+'_connid')
+
+            live = result.pop(side+'_live')
+            result[side+'_refcnt'] = "{}+{}".format(result[side+'_refcnt'], live)
+
+        if int(result['o_tag']) in LDAP_MSG_TAGS:
+            result.pop('o_tag')
+
+        if str(result['o_ctrls']) == "BVNULL":
+            result.pop('o_ctrls')
+
+        return result.items()
 
 def register(objfile):
     print("registering lloadd printers")
@@ -153,6 +213,8 @@ def register(objfile):
                                 BackendPrinter)
     printer.add_pointer_printer('LloadConnection', r'^LloadConnection$',
                                 ConnectionPrinter)
+    printer.add_pointer_printer('LloadOperation', r'^LloadOperation$',
+                                OperationPrinter)
 
     if objfile == None:
         objfile = gdb
