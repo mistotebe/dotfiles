@@ -63,10 +63,11 @@ class StructPrinter:
         result = OrderedDict()
 
         if fields is None:
-            fields = value.type.fields()
-
-        for field in fields:
-            result[field.name] = value[field.name]
+            for field in value.type.fields():
+                result[field.name] = value[field.name]
+        else:
+            for name in fields:
+                result[name] = value[name]
 
         return result
 

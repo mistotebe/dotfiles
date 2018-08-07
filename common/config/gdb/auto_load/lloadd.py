@@ -82,6 +82,7 @@ decorators = {
     'ldap_int_thread_pool_wrapper': set_thread_name("worker thread", ignore),
 
     #'ldap_pvt_thread_cond_wait': ignore,
+    'pthread_cond_wait': ignore,
 
     'event_base_loop': ignore,
     'epoll_dispatch': ignore,
@@ -93,6 +94,7 @@ decorators = {
     'event_process_active': ignore,
 
     '__GI___assert_fail': AssertDecorator,
+    '__assert_fail_base': ignore,
 
     'futex_wait_cancelable': ignore,
 

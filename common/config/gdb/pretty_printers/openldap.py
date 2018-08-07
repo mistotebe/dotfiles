@@ -84,22 +84,21 @@ class BerValuePrinter:
         if self.string_like:
             if self.len:
                 return self.val
-            elif self.val:
-                return "zero len string"
-            else:
-                # in this case, we say it's a map but don't return any children
-                # if we said it's a string, gdb would escape it and put quotes around
-                return 'BVNULL'
+            if self.val:
+                return ""
+            # Otherwise, we say it's a map but don't return any children
+            # If we said it's a string, gdb would escape it and put quotes around
+            return 'BVNULL'
 
 class SockAddrPrinter:
     def __init__(self, value):
         self.value = value
         self.family = value['sa_addr']['sa_family']
-        if self.family == AF_UNIX:
+        if self.family == socket.AF_UNIX:
             self.member = 'sa_un_addr'
-        elif self.family == AF_INET:
+        elif self.family == socket.AF_INET:
             self.member = 'sa_in_addr'
-        elif self.family == AF_INET6:
+        elif self.family == socket.AF_INET6:
             self.member = 'sa_in6_addr'
         else:
             self.member = 'sa_addr'

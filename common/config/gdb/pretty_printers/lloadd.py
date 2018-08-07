@@ -9,6 +9,7 @@ class BackendPrinter(AnnotatedStructPrinter):
     """Pretty printer for LloadBackend"""
 
     exclude = ['b_name', 'b_proto', 'b_port', 'b_host', 'b_retry_tv', 'b_counters']
+    exclude_false = ['b_cookie', 'b_dns_req', 'b_connecting']
 
     def __init__(self, value, l=None):
         super().__init__(value)
@@ -61,11 +62,11 @@ class BackendPrinter(AnnotatedStructPrinter):
 
         # TODO: convert to proper Queue printers
         for name in ['b_conns', 'b_bindconns', 'b_preparing']:
-            address = b[name].address
+            address = result[name].address
             if result[name]['cqh_first'] == address:
                 result[name] = 'empty'
             else:
-                desc = ConnectionPrinter(result[name]['cqh_first']).to_string()
+                desc = gdb.default_visualizer(result[name]['cqh_first']).to_string()
                 if result[name]['cqh_first'] == result[name]['cqh_last']:
                     result[name] = desc
                 else:
@@ -73,7 +74,7 @@ class BackendPrinter(AnnotatedStructPrinter):
 
         for name in ['b_last_conn', 'b_last_bindconn']:
             if result[name]:
-                result[name] = ConnectionPrinter(result[name]).to_string()
+                result[name] = gdb.default_visualizer(result[name]).to_string()
 
         return result.items()
 
@@ -82,7 +83,7 @@ class ConnectionPrinter(AnnotatedStructPrinter):
             'c_activitytime', 'c_peer_name', 'c_vc_cookie', 'c_pdu_cb',
             'c_needs_tls_accept', 'c_counters', 'c_private']
     exclude_false = ['c_read_timeout', 'c_pin_id', 'c_currentber',
-            'c_pendingber']
+            'c_pendingber', 'c_sasl_authctx', 'c_sasl_defaults']
     short = ['c_read_event', 'c_write_event']
 
     def conn_type(self, value=None):
@@ -125,6 +126,9 @@ class ConnectionPrinter(AnnotatedStructPrinter):
 
         live = result.pop('c_live')
         result['c_refcnt'] = "{}+{}".format(result['c_refcnt'], live)
+
+        if str(result['c_sasl_bind_mech']) == "BVNULL":
+            result.pop('c_sasl_bind_mech')
 
         _, parent = self.conn_type()
         if parent:

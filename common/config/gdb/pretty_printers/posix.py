@@ -4,21 +4,22 @@ import gdb
 import gdb.printing
 
 import socket
+from decimal import Decimal
 
 from pretty_printers.common import CollectionPrinter
 
 class TimevalPrinter:
     """Pretty printer for timeval."""
     def __init__(self, value):
-        self.sec = value['tv_sec']
-        self.usec = value['tv_usec']
-        self.tv = self.sec + self.usec / 1000000.0
+        self.sec = Decimal(int(value['tv_sec']))
+        self.usec = Decimal(int(value['tv_usec']))
+        self.tv = self.sec + self.usec / 1000000
 
     def to_string(self):
-        if self.usec:
+        if self.tv >= 1:
             return "{}s".format(self.tv)
         else:
-            return "{}s".format(self.sec)
+            return "{}ms".format(self.tv * 1000)
 
 AF_UNIX = 1
 AF_INET = 2
@@ -81,6 +82,8 @@ def register(objfile):
     printer.add_printer('sockaddr_in', r'^sockaddr_in$', SockAddrPrinterIPv4)
     printer.add_printer('sockaddr_in6', r'^sockaddr_in6$', SockAddrPrinterIPv6)
     printer.add_printer('sockaddr_un', r'^sockaddr_un$', SockAddrPrinterUnix)
+
+    printer.add_pointer_printer('struct timeval', r'^timeval$', TimevalPrinter)
 
     if objfile == None:
         objfile = gdb
