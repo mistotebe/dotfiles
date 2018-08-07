@@ -15,7 +15,7 @@
     wdiff = diff --color-words
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(cyan)<%an>%Creset' --abbrev-commit --date=relative
     graphviz = "!f() { echo 'digraph git {' ; git log --pretty='format:  %h [ label=\"%d\" ]\n  %h -> { %p }' \"$@\" | sed -e 's/ \\([0-9a-f][0-9a-f]*\\)/ \"\\1\"/g' -e '/label=\"\"/d' ; echo '}'; }; f"
-    sxs = "!zsh -c 'f() { revision=\"$1\"; file=\"$2\"; vimdiff =(git cat-file blob \"$revision:$file\") \"$file\"; }; f \"$@\"' f"
+    sxs = "!zsh -c 'f() { revision=\"$1\"; file=\"$GIT_PREFIX$2\"; vimdiff =(git cat-file blob \"$revision:$file\") \"$file\"; }; f \"$@\"' f"
     update = "!f() { if [ -n \"${*:2}\" ]; then branches=( \"${@:2}\" ); else branches=(); fi; remote=\"${1:-origin}\"; for branch in \"${branches[@]}\"; do git checkout \"$branch\" && git pull \"$1\" \"$branch\" && git checkout -; done}; f"
     review = "!f() { branch=${1:-origin/master}; git log -p --reverse -w --color-words --word-diff --word-diff-regex='([a-zA-Z]+|[^[:space:]])' -C -M $branch..$@ ; }; f"
     flake = "!bash -c 'f() { if [ -e \"$1\" ]; then path=$1; shift; else path=$GIT_PREFIX; fi; vim -q <(flake8 \"${path}\" \"${@}\"); }; f \"${@}\"' --"
