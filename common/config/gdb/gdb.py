@@ -27,7 +27,7 @@ class ObjFileHandler(object):
             try:
                 mod = import_module("auto_load." + basename)
                 self.loaded_modules[basename] = mod
-            except ModuleNotFoundError as e:
+            except ImportError as e:
                 return
         f = getattr(mod, "new_objfile")
         if f:
