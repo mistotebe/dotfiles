@@ -253,6 +253,12 @@ class DBPrinter(AnnotatedStructPrinter):
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
     exclude = ['o_next']
+    exclude_false = [
+        'o_abandon', 'o_cancel', 'o_groups', 'o_do_not_cache',
+        'o_is_auth_check', 'o_dont_replicate', 'o_nocaching',
+        'o_delete_glue_parent', 'o_no_schema_check', 'o_no_subordinate_glue',
+        'o_controls', 'o_ber', 'o_res_ber', 'o_ctrls', 'o_private',
+    ]
 
     members = {
         0x42: ["Unbind request", None],
