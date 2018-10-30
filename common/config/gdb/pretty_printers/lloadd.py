@@ -79,9 +79,9 @@ class BackendPrinter(AnnotatedStructPrinter):
         return result.items()
 
 class ConnectionPrinter(AnnotatedStructPrinter):
-    exclude = ['c_connid', 'c_destroy', 'c_txn', 'c_sb', 'c_starttime',
-            'c_activitytime', 'c_peer_name', 'c_vc_cookie', 'c_pdu_cb',
-            'c_needs_tls_accept', 'c_counters', 'c_private']
+    exclude = ['c_connid', 'c_destroy', 'c_unlink', 'c_txn', 'c_sb',
+            'c_starttime', 'c_activitytime', 'c_peer_name', 'c_vc_cookie',
+            'c_pdu_cb', 'c_needs_tls_accept', 'c_counters', 'c_private']
     exclude_false = ['c_read_timeout', 'c_pin_id', 'c_currentber',
             'c_pendingber', 'c_sasl_authctx', 'c_sasl_defaults']
     short = ['c_read_event', 'c_write_event']
@@ -198,8 +198,9 @@ class OperationPrinter(AnnotatedStructPrinter):
             if str(result[side]) != "NULL":
                 result.pop(side+'_connid')
 
-            live = result.pop(side+'_live')
-            result[side+'_refcnt'] = "{}+{}".format(result[side+'_refcnt'], live)
+            if side+'_live' in result:
+                live = result.pop(side+'_live')
+                result[side+'_refcnt'] = "{}+{}".format(result[side+'_refcnt'], live)
 
         if int(result['o_tag']) in LDAP_MSG_TAGS:
             result.pop('o_tag')
