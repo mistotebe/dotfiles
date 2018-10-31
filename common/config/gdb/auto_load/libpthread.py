@@ -1,19 +1,16 @@
-#!/usr/bin/env python3
-
 import gdb
 
 import auto_load._common as helpers
 from auto_load._common import ignore
 
-class LloadFrameFilter(helpers.FrameFilter):
+class PThreadFrameFilter(helpers.FrameFilter):
+    drop_prefixes = ['__pthread_']
     decorators = {
-        'lload_base_dispatch': ignore,
-        'lload_start_daemon': ignore,
-
-        'handle_pdus': ignore,
+        'start_thread': ignore,
+        'futex_wait_cancelable': ignore,
     }
 
 def new_objfile(event):
-    ff = LloadFrameFilter()
+    ff = PThreadFrameFilter()
     event.new_objfile.frame_filters[ff.name] = ff
     print(ff.name+" loaded")
