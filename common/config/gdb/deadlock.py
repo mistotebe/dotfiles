@@ -34,14 +34,7 @@ class WaiterEntry(ThreadEntry):
         self.root = None
         self.children = set()
 
-        if self.frame.name() == '__lll_lock_wait':
-            self.mutex = self.frame.older().read_var('mutex')
-            self.owner_lwp_id = int(self.mutex['__data']['__owner'])
-            self.frame = self.frame.older().older()
-
-            if self.frame.name() == 'ldap_pvt_thread_mutex_lock':
-                self.frame = self.frame.older()
-        else:
+        if not self._populate(self.frame.name()):
             self.root = self.lwp_id
 
         if self.lwp_id == self.owner_lwp_id:
@@ -63,6 +56,21 @@ class WaiterEntry(ThreadEntry):
             fmt += " (waiting on itself)"
 
         return fmt.format(self=self, thread=self.thread, frame=self.frame, name=self.frame.name(), sal=sal)
+
+    def _populate(self, name):
+        if name == '__pthread_mutex_lock_full':
+            self.mutex = self.frame.read_var('mutex')
+            self.frame = self.frame.older()
+        elif name == '__lll_lock_wait':
+            self.mutex = self.frame.older().read_var('mutex')
+            self.frame = self.frame.older().older()
+            if self.frame.name() == 'ldap_pvt_thread_mutex_lock':
+                self.frame = self.frame.older()
+        else:
+            return
+
+        self.owner_lwp_id = int(self.mutex['__data']['__owner'])
+        return self.owner_lwp_id
 
 class LockGraph:
     def __init__(self, inferior):
