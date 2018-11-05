@@ -285,9 +285,8 @@ class OperationPrinter(AnnotatedStructPrinter):
         if member is not None:
             request = result['o_request']
             if member:
-                result['o_request'] = request[member]
-        else:
-            del result['o_request']
+                result['o_request.'+member] = request[member]
+        del result['o_request']
 
         return result.items()
 

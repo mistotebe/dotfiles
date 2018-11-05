@@ -17,9 +17,9 @@ class TimevalPrinter:
 
     def to_string(self):
         if self.tv >= 1:
-            return "{}s".format(self.tv)
+            return "{}s".format(self.tv.normalize())
         else:
-            return "{}ms".format(self.tv * 1000)
+            return "{}ms".format((self.tv * 1000).normalize())
 
 AF_UNIX = 1
 AF_INET = 2
