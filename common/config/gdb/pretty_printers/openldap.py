@@ -270,7 +270,7 @@ class OperationPrinter(AnnotatedStructPrinter):
         0x68: ["Add request", 'oq_add'],
         0x6c: ["ModRDN request", 'oq_modrdn'],
         0x6e: ["Compare request", 'oq_compare'],
-        0x77: ["Extended request", ''],
+        0x77: ["Extended request", 'oq_extended'],
     }
 
     def to_string(self):
