@@ -3,9 +3,9 @@
 import gdb
 
 class ThreadEntry:
+    "Representable thread object"
+
     def __init__(self, thread):
-        # create a context manager for thread, frame is not valid unless we
-        # select its thread
         saved_thread = gdb.selected_thread()
 
         self.thread = thread
@@ -15,24 +15,32 @@ class ThreadEntry:
 
         self.pid, self.lwp_id, _ = thread.ptid
 
+        if not saved_thread:
+            saved_thread.switch()
+
     def __hash__(self):
         return self.lwp_id
 
     def __repr__(self):
-        return "Thread #{thread.num} (LWP {self.lwp_id})".format(self=self, thread=self.thread, frame=self.frame)
+        return "Thread #{thread.num} (LWP {self.lwp_id})".format(self=self, thread=self.thread)
 
 class WaiterEntry(ThreadEntry):
+    "Thread object representing a vertex+its outbound edges in a LockGraph"
+
     FLAG_STRANDED = 1 << 0
     FLAG_SELF_LOCKED = 1 << 1
 
     def __init__(self, thread):
+        saved_thread = gdb.selected_thread()
         super().__init__(thread)
+        self.thread.switch()
 
         self._flags = 0
 
         self.owner_lwp_id = None
         self.root = None
         self.children = set()
+        self.mutex = None
 
         if not self._populate(self.frame.name()):
             self.root = self.lwp_id
@@ -41,6 +49,9 @@ class WaiterEntry(ThreadEntry):
             self._flags |= self.FLAG_SELF_LOCKED
             self.root = self.lwp_id
 
+        if not saved_thread:
+            saved_thread.switch()
+
     def __repr__(self):
         self.thread.switch()
         sal = self.frame.find_sal()
@@ -48,14 +59,15 @@ class WaiterEntry(ThreadEntry):
         fmt = "Thread #{thread.num} (LWP {self.lwp_id})"
         if self.frame.name():
             fmt += " in {name}()"
-        if sal.is_valid():
+        if sal.is_valid() and sal.symtab and sal.symtab.is_valid():
             fmt += " at {sal.symtab.filename}:{sal.line}"
         if self._flags & self.FLAG_STRANDED:
             fmt += " (waiting on a nonexistent thread LWP {self.owner_lwp_id})"
         if self._flags & self.FLAG_SELF_LOCKED:
             fmt += " (waiting on itself)"
 
-        return fmt.format(self=self, thread=self.thread, frame=self.frame, name=self.frame.name(), sal=sal)
+        return fmt.format(self=self, thread=self.thread, frame=self.frame,
+                          name=self.frame.name(), sal=sal)
 
     def _populate(self, name):
         if name == '__pthread_mutex_lock_full':
@@ -67,12 +79,14 @@ class WaiterEntry(ThreadEntry):
             if self.frame.name() == 'ldap_pvt_thread_mutex_lock':
                 self.frame = self.frame.older()
         else:
-            return
+            return None
 
         self.owner_lwp_id = int(self.mutex['__data']['__owner'])
         return self.owner_lwp_id
 
 class LockGraph:
+    "Generate the lock waiting graph for a given inferior"
+
     def __init__(self, inferior):
         self.inferior = inferior
         self.threads = {}
@@ -138,6 +152,8 @@ class CommandDeadlockPrint(gdb.Command):
         print("Command 'deadlock' loaded")
 
     def invoke(self, arg, from_tty):
+        "Resolves and prints deadlocks"
+
         saved_thread = gdb.selected_thread()
         graph = LockGraph(gdb.selected_inferior())
 
@@ -152,13 +168,15 @@ class CommandDeadlockPrint(gdb.Command):
             self.print_deps(cycle)
             print()
 
-        saved_thread.switch()
+        if saved_thread:
+            saved_thread.switch()
 
     def print_deps(self, thread, depth=0, root=None):
+        "Print the part of the component related to thread (anchored at root)"
+
         if root == thread:
             print("\t" * depth + "deadlock from root")
         else:
             print("\t" * depth + repr(thread))
             for child in thread.children:
                 self.print_deps(child, depth+1, root or thread)
-
