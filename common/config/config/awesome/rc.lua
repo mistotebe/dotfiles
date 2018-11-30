@@ -12,7 +12,7 @@ local naughty = require("naughty")
 local menubar = require("menubar")
 
 -- Load Debian menu entries
-require("debian.menu")
+local freedesktop = require("freedesktop")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -99,8 +99,10 @@ myawesomemenu = {
    { "quit", awesome.quit }
 }
 
+freedesktopmenu = freedesktop.menu.build()
+
 mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu, beautiful.awesome_icon },
-                                    { "Debian", debian.menu.Debian_menu.Debian },
+                                    { "Debian", freedesktopmenu },
                                     { "open terminal", terminal }
                                   }
                         })
@@ -117,7 +119,7 @@ menubar.app_folders = { "/usr/share/applications/", "/usr/local/share/applicatio
 
 -- {{{ Wibox
 -- Create a textclock widget
-mytextclock = awful.widget.textclock("%d. %m. %Y %k.%M")
+mytextclock = wibox.widget.textclock("%d. %m. %Y %k.%M")
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -187,7 +189,7 @@ for s = 1, screen.count() do
     mytasklist[s] = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, mytasklist.buttons)
 
     -- Create the wibox
-    mywibox[s] = awful.wibox({ position = "top", screen = s })
+    mywibox[s] = awful.wibar({ position = "top", screen = s })
 
     -- Widgets that are aligned to the left
     local left_layout = wibox.layout.fixed.horizontal()
