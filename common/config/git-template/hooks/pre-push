@@ -1,0 +1,38 @@
+#!/bin/bash
+
+repo_name="$1"
+repo_uri="$2"
+
+if git config --get "remote.$repo_name.push-only" >/dev/null; then
+    { readarray -d '' branches; } < <(git config --get-all -z "remote.$repo_name.push-only")
+    #echo "Permitted branches include:" "${branches[@]@Q}"
+    if [ -z "${branches[*]}" ]; then
+        echo "No pushes permitted to ${repo_name@Q}"
+        exit 1
+    fi
+else
+    #echo "No restriction in place for repo $repo_name"
+    exit 0
+fi
+
+while read local_ref local_hash remote_ref remote_hash; do
+    branch="${remote_ref#refs/heads/}"
+    if [ "$branch" = "$remote_ref" ]; then
+        echo "ref ${remote_ref@Q} not a branch"
+        exit 1
+    fi
+
+    permitted=
+    for candidate in "${branches[@]}"; do
+        if [ "$branch" = "$candidate" ]; then
+            permitted=yes
+            break
+        fi
+    done
+
+    if [ -z "$permitted" ]; then
+        echo "Not permitted to push to branch ${branch@Q}"
+        echo "Permitted branches include:" "${branches[@]@Q}"
+        exit 1
+    fi
+done
