@@ -3,6 +3,9 @@ set history size 1000
 set history remove-duplicates unlimited
 set history filename ~/.gdb_history
 
+# regular blue is too dark on a black screen
+set style address foreground cyan
+
 add-auto-load-safe-path ~/.gdb/auto-load
 add-auto-load-scripts-directory ~/.gdb/auto-load
 

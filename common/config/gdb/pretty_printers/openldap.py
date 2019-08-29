@@ -329,7 +329,7 @@ def register(objfile):
                                 OperationPrinter)
 
     # register pthread aliases if possible
-    gdb.post_event(finish_printer)
+    gdb.post_event(finish_printer, printer)
 
     if objfile == None:
         objfile = gdb
