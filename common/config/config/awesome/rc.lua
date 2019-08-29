@@ -396,6 +396,45 @@ globalkeys = gears.table.join(
     -- Menubar
     awful.key({ modkey }, "p", function() menubar.show() end,
               {description = "show the menubar", group = "launcher"})
+
+    -- Multimedia keys
+    awful.key({                   }, "XF86AudioMute",        function () volume("toggle")   end),
+    awful.key({                   }, "XF86AudioLowerVolume", function () volume("5%-")      end),
+    awful.key({                   }, "XF86AudioRaiseVolume", function () volume("5%+")      end),
+
+    -- Other useful things
+    awful.key({                   }, "Scroll_Lock",
+                                          function ()
+                                              -- use dbus, awesome should know how to
+                                              awful.util.spawn("quodlibet --play-pause")
+                                          end),
+    awful.key({ modkey            }, "s",
+                                          function ()
+                                              awful.util.spawn("gnome-screenshot")
+                                          end),
+    awful.key({                   }, "Print",
+                                          function ()
+                                              awful.util.spawn("gnome-screenshot -w")
+                                          end),
+-- Conflicts with tiling keys
+--    awful.key({ modkey            }, "l",
+--                                          function ()
+--                                              awful.util.spawn("sleep 0.5; xset dpms force off; xtrlock")
+--                                          end),
+    awful.key({ modkey, altkey    }, "l",
+                                          function ()
+                                              awful.util.spawn("sleep 0.5")
+                                              awful.util.spawn("xset dpms force off")
+                                              awful.util.spawn("xtrlock")
+                                          end),
+    awful.key({                   }, "XF86Display",
+                                          function ()
+                                              awful.util.spawn("xrandr --auto --output HDMI2 --off")
+                                          end),
+    awful.key({ "Control"         }, "XF86Display",
+                                          function ()
+                                              awful.util.spawn("xrandr --output LVDS1 --auto --output HDMI2 --auto --primary --left-of LVDS1")
+                                          end)
 )
 
 clientkeys = gears.table.join(
