@@ -31,8 +31,8 @@
 [url "https://github.com"]
     insteadOf = "git://github.com"
 [url "github:"]
-    pushInsteadOf = "git://github.com"
-    pushInsteadOf = "https://github.com"
+    pushInsteadOf = "git://github.com/"
+    pushInsteadOf = "https://github.com/"
 [url "git-master.openldap.org:~git/git/"]
     insteadOf = openldap:
 #    pushInsteadOf = git://git.openldap.org/
