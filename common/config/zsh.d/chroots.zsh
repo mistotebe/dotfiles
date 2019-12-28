@@ -30,8 +30,8 @@ chroot() {
     done
     if grep -q / "$chroot/etc/fstab"; then
         # If there's something to mount, we need /proc
-        sudo mount -t proc procfs "$chroot/proc"
-        sudo env SHELL=/bin/bash chroot mount
+        mountpoint "$chroot/proc" || sudo mount -t proc procfs "$chroot/proc"
+        sudo env SHELL=/bin/bash chroot "$chroot" mount -a
     fi
     sudo env SHELL=/bin/bash chroot "$@"
 }

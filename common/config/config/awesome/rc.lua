@@ -252,7 +252,7 @@ awful.screen.connect_for_each_screen(function(s)
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
     right_layout:add(mykeyboardlayout)
-    if s == 1 then right_layout:add(wibox.widget.systray()) end
+    if s.index == 1 then right_layout:add(wibox.widget.systray()) end
     right_layout:add(mytextclock)
     right_layout:add(s.mylayoutbox)
 

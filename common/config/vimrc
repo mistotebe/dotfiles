@@ -100,6 +100,9 @@ autocmd  BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex  setlocal textwidth=80
 autocmd  BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex  setlocal foldmethod=manual
 autocmd  BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex  setlocal spell
 
+autocmd  FileType tex setlocal ts=2
+autocmd  FileType tex setlocal sw=2
+
 autocmd  BufNewFile,BufReadPost diary.txt     inoremap <C-T> <C-R>=strftime("%H.%M")<CR>
 autocmd  BufNewFile,BufReadPost diary.txt     setlocal textwidth=0
 autocmd  BufNewFile,BufReadPost diary.txt     highlight Done ctermbg=22
@@ -137,6 +140,8 @@ autocmd FileType mail setlocal spell
 autocmd FileType markdown setlocal spell
 autocmd FileType markdown setlocal textwidth=80
 
+autocmd FileType yaml setlocal shiftwidth=2
+
 " Programming Keys:
 "   F9  = Make
 "   F10 = Next Error
@@ -151,6 +156,10 @@ nnoremap <F11> :cprev<CR>
 " F5 = execute the file
 nnoremap <F5> <Esc>:w<CR>:!%:p<CR>
 inoremap <F5> <C-O>:w<CR><C-O>:!%:p<CR>
+
+" F12 = resync syntax highlighting (vim syntax fails with folds)
+nnoremap <F12> :syntax sync fromstart<CR>
+inoremap <F12> <C-O>:syntax sync fromstart<CR>
 
 " Meta-Up/Down - previous/next window
 nnoremap <M-Up> <C-W>W

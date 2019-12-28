@@ -25,8 +25,10 @@
           ;;(with-selected-window (display-buffer buf)
           ;;                      (org-agenda-redo))
           )))))
-;;(run-at-time nil 300 'mistotebe/org-agenda-redo-in-other-window)
+(run-at-time nil 300 'mistotebe/org-agenda-redo-in-other-window)
 
+;; fix with this in mind https://lists.gnu.org/archive/html/emacs-orgmode/2017-02/msg00270.html
+(setq org-duration-format (quote h:mm))
 (setq org-time-clocksum-format (quote (:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)))
 (setq org-clock-into-drawer t)
 
@@ -41,12 +43,12 @@
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (add-to-list 'auto-mode-alist '("ledger/.*\\.dat$" . ledger-mode))
 
-(setq org-todo-keywords
-      '((sequence "TODO" "ACTIVE" "|" "DONE")))
-(setq org-todo-keyword-faces
-      '(("ACTIVE" . "brightyellow")))
+;;(setq org-todo-keywords
+;;      '((sequence "TODO" "ACTIVE" "|" "DONE")))
+;;(setq org-todo-keyword-faces
+;;      '(("ACTIVE" . "brightyellow")))
 (setq org-log-done 'time)
-(setq org-startup-indented t)
+;;(setq org-startup-indented t)
 
 
 (global-set-key "\C-cl" 'org-store-link)
@@ -54,25 +56,28 @@
 (global-font-lock-mode 1)
 
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ledger-post-account-alignment-column 2)
+ '(ledger-post-amount-alignment-column 2)
  '(ledger-reports
    (quote
-    (("hsbc" "ledger reg --sort d --effective -d \"date >= [`date -d 'last month' +%Y/%m/%d`]\" hsbc and not isa")
+    (("hsbc" "ledger reg --sort d --effective -d \"date >= [`date -d 'last month' +%Y/%m/%d`]\" hsbc and not isa and not regular")
+     ("credit" "ledger reg --sort d --effective -d \"date >= [`date -d 'last month' +%Y/%m/%d`]\" credit")
      ("fio" "ledger reg --sort d --effective -d \"date >= [`date -d 'last month' +%Y/%m/%d`]\" fio")
      ("hotovost" "ledger reg --sort d -d \"date >= [`date -d 'last month' +%Y/%m/%d`]\" hotove -l 'commodity == \"GBP\"'")
      ("bal" "ledger -f %(ledger-file) bal")
      ("reg" "ledger -f %(ledger-file) reg")
      ("payee" "ledger -f %(ledger-file) reg @%(payee)")
      ("account" "ledger -f %(ledger-file) reg %(account)"))))
- '(org-agenda-files (quote ("~/notes.org"))))
+ '(org-agenda-files (quote ("~/notes/notes.org"))))
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  )
 
 ;; With Screen between Emacs and the "real" terminal, it doesn't occur
