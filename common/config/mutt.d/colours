@@ -1,0 +1,77 @@
+# Partial solarized theme
+
+# basic colors
+color normal        color241        default
+color error         color160        default
+color tilde         color235        default
+color message       color37         default
+color markers       color160        color245
+color attachment    color254        default
+color search        color61         default
+#color status        black           color235
+color status        color241        color235
+color indicator     color234        color244
+color tree          color136        default                                     # arrow in threads
+
+# basic monocolor screen
+mono  bold          bold
+mono  underline     underline
+mono  indicator     reverse
+mono  error         bold
+
+# index colours, last match applies
+color index color37     black       "~g"                        # signed
+color index color244    color234    "~v"                        # collapsed threads
+color index color254    color64     "~O | ~N"                   # unread
+color index color254    color70     "(~v ~(~O)) | (~v ~(~N))"   # unread or collapsed thread with unread messages only
+color index color64     black       "~v (~(~N) | ~(~O)) ~(~R)"  # collapsed thread with read and unread messages
+
+# Flagged messages
+# - fully flagged threads get red background
+# - flagged leaf messages get highlighted (brighter red, color9)
+color index color160    black       "~F"
+color index color160    color52     "~F !~(!~F)"                # fully flaaged thread
+color index color9      black       "~F ~$"                     # leaf message is flagged
+color index color124    color234    "~v ~(~F) ~v ~(!~F)"        # collapsed thread with flagged and unflagged messages
+color index color9      color234    "~F ~v ~(~F) ~v ~(!~F)"     # same but leading message is flagged
+
+# temporary, user-actioned items get precedence over everything
+color index color136    black       "~T"                        # tagged
+color index color239    black       "~D"                        # deleted
+
+# Headers
+
+color hdrdefault    color240        default
+color header        color244        default         "^(From)"
+color header        color33         default         "^(Subject)"
+
+# Highlights inside the body of a message.
+
+color quoted        color33         default # blue
+color quoted1       color37         default # cyan
+color quoted2       color125        default # magenta
+color quoted3       color166        default # orange
+color quoted4       color136        default # yellow
+
+color signature     color240        default
+color bold          color235        default
+color underline     color235        default
+color normal        color244        default
+
+# URLs
+color body  color160    black   "(http|https|ftp|news|telnet|finger)://[^ \">\t\r\n]*"
+color body  color160    black   "mailto:[-a-z_0-9.+]+@[-a-z_0-9.]+"
+color body  color160    black   "news:[^ \">\t\r\n]*"
+mono  body  bold                "(http|https|ftp|news|telnet|finger)://[^ \">\t\r\n]*"
+mono  body  bold                "mailto:[-a-z_0-9.+]+@[-a-z_0-9.]+"
+mono  body  bold                "news:[^ \">\t\r\n]*"
+
+# email addresses
+color body  color64     black "[-a-z_0-9.%$+]+@[-a-z_0-9.]+\\.[-a-z][-a-z]+"
+mono  body  bold              "[-a-z_0-9.%$+]+@[-a-z_0-9.]+\\.[-a-z][-a-z]+"
+
+# Various smilies and the like
+color body  color64     black   " [;:]-*[)>(<|*]"                                   # :-) etc...
+color body  color33     black   "(^|[[:space:]])\\*[^[:space:]]+\\*([[:space:]]|$)" # *Bold* text.
+color body  color33     black   "(^|[[:space:]])_[^[:space:]]+_([[:space:]]|$)"     # _Underlined_ text.
+color body  color33     black   "(^|[[:space:]])/[^[:space:]]+/([[:space:]]|$)"     # /Italic/ text.

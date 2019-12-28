@@ -118,35 +118,4 @@ mailboxes imaps://cargill@atlas.cz@imap.centrum.cz/
 mailboxes imap://ondra@dodo.mistotebe.net/
 mailboxes imaps://mistotebe@imap.gmail.com/
 
-# index colours, last match applies
-color index cyan black ~g
-color index color15 color234 ~v
-# unread or collapsed thread with unread messages only
-color index default green "~O | ~N"
-color index default color70 "(~v ~(~O)) | (~v ~(~N))"
-# collapsed thread with read and unread messages
-color index green black "~v (~(~N) | ~(~O)) ~(~R)"
-color index yellow black ~T
-color index brightblack black ~D
-color index red black "~F | (~v ~(~F))"
-
-# Highlights inside the body of a message.
-
-# URLs
-color body brightblue  black "(http|https|ftp|news|telnet|finger)://[^ \">\t\r\n]*"
-color body brightblue  black "mailto:[-a-z_0-9.+]+@[-a-z_0-9.]+"
-color body brightblue  black "news:[^ \">\t\r\n]*"
-mono  body bold              "(http|https|ftp|news|telnet|finger)://[^ \">\t\r\n]*"
-mono  body bold              "mailto:[-a-z_0-9.+]+@[-a-z_0-9.]+"
-mono  body bold              "news:[^ \">\t\r\n]*"
-
-# email addresses
-color body brightblue  black "[-a-z_0-9.%$+]+@[-a-z_0-9.]+\\.[-a-z][-a-z]+"
-mono  body bold              "[-a-z_0-9.%$+]+@[-a-z_0-9.]+\\.[-a-z][-a-z]+"
-
-# Various smilies and the like
-color body brightgreen black " [;:]-*[)>(<|*]"                                   # :-) etc...
-color body brightblue  black "(^|[[:space:]])\\*[^[:space:]]+\\*([[:space:]]|$)" # *Bold* text.
-color body brightblue  black "(^|[[:space:]])_[^[:space:]]+_([[:space:]]|$)"     # _Underlined_ text.
-color body brightblue  black "(^|[[:space:]])/[^[:space:]]+/([[:space:]]|$)"     # /Italic/ text.
-
+source ~/.mutt.d/colours

@@ -70,6 +70,17 @@ nnoremap <M-Left>   :tabprev<CR>
 nnoremap <M-Up>     <C-w>w
 nnoremap <M-Down>   <C-w>W
 
+" Colorscheme
+if $TERM =~ '256'
+    let g:solarized_termcolors = 256
+    let g:solarized_termtrans = 1
+    let g:solarized_bold = 0
+    let g:solarized_underline = 0
+endif
+if &t_Co >= 256
+    colorscheme solarized
+endif
+
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 2
 let g:syntastic_check_on_open = 1
@@ -192,7 +203,7 @@ endfunction
 
 au BufWritePost * call ModeChange()
 
-hi SpecialKey ctermfg=238
+"hi SpecialKey ctermfg=238
 
 " make diff highlight actually usable
 hi DiffChange ctermbg=235
