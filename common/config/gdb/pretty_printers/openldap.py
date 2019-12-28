@@ -3,6 +3,7 @@
 import gdb
 import gdb.printing
 
+import functools
 import socket
 
 from pretty_printers.common import CollectionPrinter, AnnotatedStructPrinter
@@ -328,10 +329,10 @@ def register(objfile):
     printer.add_pointer_printer('Operation', r'^Operation$',
                                 OperationPrinter)
 
-    # register pthread aliases if possible
-    gdb.post_event(finish_printer, printer)
-
     if objfile == None:
         objfile = gdb
 
     gdb.printing.register_pretty_printer(objfile, printer)
+
+    # register pthread aliases if possible
+    gdb.post_event(functools.partial(finish_printer, printer))

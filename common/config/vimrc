@@ -92,6 +92,8 @@ let g:syntastic_c_checkers = []
 let g:syntastic_c_clang_check_args="-analyze -extra-arg -Xanalyzer -extra-arg -analyzer-output=text"
 let g:syntastic_c_clang_check_post_args = ""
 
+let g:syntastic_python_checkers = ['python3']
+
 augroup syntax
     au! BufNewFile,BufReadPost *.smv
     autocmd  BufNewFile,BufReadPost *.smv  so ~/.vimrc.cadsmv.vim
