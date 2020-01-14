@@ -8,6 +8,12 @@ from decimal import Decimal
 
 from pretty_printers.common import CollectionPrinter
 
+
+AF_UNIX = 1
+AF_INET = 2
+AF_INET6 = 10
+
+
 class TimevalPrinter:
     """Pretty printer for timeval."""
     def __init__(self, value):
@@ -21,9 +27,6 @@ class TimevalPrinter:
         else:
             return "{}ms".format((self.tv * 1000).normalize())
 
-AF_UNIX = 1
-AF_INET = 2
-AF_INET6 = 10
 
 class SockAddrPrinterIP:
     def __init__(self, value):
@@ -43,10 +46,12 @@ class SockAddrPrinterIP:
     def to_string(self):
         return "{}={}:{}".format(self.name, self.address(), self.port())
 
+
 class SockAddrPrinterIPv4(SockAddrPrinterIP):
     addr_len = 4
     prefix = 'sin_'
     name = 'IPv4'
+
 
 class SockAddrPrinterIPv6(SockAddrPrinterIP):
     addr_len = 16
@@ -66,6 +71,7 @@ class SockAddrPrinterIPv6(SockAddrPrinterIP):
 
         return result.items()
 
+
 class SockAddrPrinterUnix:
     def __init__(self, value):
         self.value = value
@@ -74,6 +80,7 @@ class SockAddrPrinterUnix:
     def to_string(self):
         address = self.value['sun_path']
         return "UNIX={}".format(address)
+
 
 def register(objfile):
     printer = CollectionPrinter('POSIX')

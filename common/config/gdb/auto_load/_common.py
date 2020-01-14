@@ -1,6 +1,7 @@
 import gdb
 from gdb.FrameDecorator import FrameDecorator
 
+
 class GDBArgument:
     def __init__(self, name, value):
         self._name = name
@@ -12,6 +13,7 @@ class GDBArgument:
     def value(self):
         return self._value
 
+
 class SavingDecorator(FrameDecorator):
     def __init__(self, frame, frame_iterator):
         super().__init__(frame)
@@ -19,8 +21,10 @@ class SavingDecorator(FrameDecorator):
         self.frame_iterator = frame_iterator
         self.thread = gdb.selected_thread()
 
+
 def ignore(frame, frame_iterator):
     return None
+
 
 class FrameFilter:
     drop_prefixes = []
@@ -38,7 +42,7 @@ class FrameFilter:
                 yield frame
                 continue
 
-            if name.find("@@") >= 0:
+            if name.find('@@') >= 0:
                 name = name[:name.find('@@')]
 
             decorator = self.decorators.get(name)

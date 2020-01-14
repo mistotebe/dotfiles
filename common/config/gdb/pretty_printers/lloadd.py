@@ -5,6 +5,33 @@ import gdb.printing
 
 from pretty_printers.common import CollectionPrinter, AnnotatedStructPrinter
 
+
+LDAP_MSG_TAGS = {
+    0x60: "Bind request",
+    0x42: "Unbind request",
+    0x63: "Search request",
+    0x66: "Modify request",
+    0x68: "Add request",
+    0x4a: "Delete request",
+    0x6c: "ModRDN request",
+    0x6e: "Compare request",
+    0x50: "Abandon request",
+    0x77: "Extended request",
+
+    0x61: "Bind response",
+    0x64: "Search entry",
+    0x73: "Search reference",
+    0x65: "Search result",
+    0x67: "Modify response",
+    0x69: "Add response",
+    0x6b: "Delete response",
+    0x6d: "ModRDN response",
+    0x6f: "Compare response",
+    0x78: "Extended response",
+    0x79: "Intermediate response",
+}
+
+
 class BackendPrinter(AnnotatedStructPrinter):
     """Pretty printer for LloadBackend"""
 
@@ -78,6 +105,7 @@ class BackendPrinter(AnnotatedStructPrinter):
 
         return result.items()
 
+
 class ConnectionPrinter(AnnotatedStructPrinter):
     exclude = ['c_connid', 'c_destroy', 'c_unlink', 'c_txn', 'c_sb',
             'c_starttime', 'c_activitytime', 'c_peer_name', 'c_vc_cookie',
@@ -148,30 +176,6 @@ class ConnectionPrinter(AnnotatedStructPrinter):
 
         return result.items()
 
-LDAP_MSG_TAGS = {
-    0x60: "Bind request",
-    0x42: "Unbind request",
-    0x63: "Search request",
-    0x66: "Modify request",
-    0x68: "Add request",
-    0x4a: "Delete request",
-    0x6c: "ModRDN request",
-    0x6e: "Compare request",
-    0x50: "Abandon request",
-    0x77: "Extended request",
-
-    0x61: "Bind response",
-    0x64: "Search entry",
-    0x73: "Search reference",
-    0x65: "Search result",
-    0x67: "Modify response",
-    0x69: "Add response",
-    0x6b: "Delete response",
-    0x6d: "ModRDN response",
-    0x6f: "Compare response",
-    0x78: "Extended response",
-    0x79: "Intermediate response",
-}
 
 class OperationPrinter(AnnotatedStructPrinter):
     exclude = ['o_ber', 'o_request']
@@ -209,6 +213,7 @@ class OperationPrinter(AnnotatedStructPrinter):
             result.pop('o_ctrls')
 
         return result.items()
+
 
 def register(objfile):
     print("registering lloadd printers")

@@ -5,6 +5,7 @@ import gdb.printing
 
 from pretty_printers.common import CollectionPrinter
 
+
 EV_FLAGS = {
     "EV_TIMEOUT": 0x01,
     "EV_READ": 0x02,
@@ -25,6 +26,7 @@ EV_INTERNAL = {
     "EVLIST_ACTIVE_LATER": 0x20,
     "EVLIST_FINALIZING": 0x40,
 }
+
 
 class EventPrinter:
     """Pretty printer for struct event"""
@@ -87,6 +89,7 @@ class EventPrinter:
                 res['timeout'] = self.event['ev_io_timeout']
 
         return res.items()
+
 
 def register(objfile):
     print("registering libevent printers")

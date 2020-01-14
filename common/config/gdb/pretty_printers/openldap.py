@@ -8,6 +8,7 @@ import socket
 
 from pretty_printers.common import CollectionPrinter, AnnotatedStructPrinter
 
+
 class LockPrinter:
     """Backup pretty printer for pthread_lock."""
 
@@ -38,6 +39,7 @@ class LockPrinter:
             else:
                 return "Locked by LWP {self.owner}".format(self=self)
         return "Unlocked"
+
 
 class BerValuePrinter:
     """Pretty printer for BerValue."""
@@ -93,6 +95,7 @@ class BerValuePrinter:
             # If we said it's a string, gdb would escape it and put quotes around
             return 'BVNULL'
 
+
 class SockAddrPrinter:
     def __init__(self, value):
         self.value = value
@@ -109,6 +112,7 @@ class SockAddrPrinter:
     def to_string(self):
         return self.value[self.member]
 
+
 class AttrDescPrinter:
     """Pretty printer for AttributeDescription"""
 
@@ -119,6 +123,7 @@ class AttrDescPrinter:
     def to_string(self):
         return self.name
 
+
 class OCPrinter:
     """Pretty printer for ObjectClass"""
 
@@ -127,6 +132,7 @@ class OCPrinter:
 
     def to_string(self):
         return self.oc['soc_cname']
+
 
 class EntryPrinter:
     """Pretty printer for Entry"""
@@ -142,6 +148,7 @@ class EntryPrinter:
         #    "dn": self.e['e_name'],
         }.items()
 
+
 class TaskPrinter:
     """Pretty printer for ldap_int_thread_task_s"""
 
@@ -155,6 +162,7 @@ class TaskPrinter:
         return {
             "arg": self.work['ltt_arg'],
         }.items()
+
 
 class QueuePrinter:
     """Pretty printer for ldap_int_thread_poolq_s"""
@@ -171,6 +179,7 @@ class QueuePrinter:
             #"cond": self.queue['ltp_cond'],
             "work": self.queue['ltp_work_list']['stqh_first']
         }.items()
+
 
 class PoolPrinter:
     """Pretty printer for ldap_pvt_thread_pool_t"""
@@ -193,6 +202,7 @@ class PoolPrinter:
             "queues": self.pool['ltp_numqs'],
             "queue": self.pool['ltp_wqs'][0],
         }.items()
+
 
 class DBPrinter(AnnotatedStructPrinter):
     """Pretty printer for BackendDB"""
@@ -251,6 +261,7 @@ class DBPrinter(AnnotatedStructPrinter):
 
         return result.items()
 
+
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
     exclude = ['o_next']
@@ -291,12 +302,14 @@ class OperationPrinter(AnnotatedStructPrinter):
 
         return result.items()
 
+
 def finish_printer(printer):
     #mutex = gdb.lookup_type('pthread_mutex_t')
 
     condition = gdb.lookup_type('pthread_cond_t')
     printer.add_printer('condition', r'^ldap_pvt_thread_cond_t$',
                         gdb.default_visualizer(condition))
+
 
 def register(objfile):
     print("registering OpenLDAP printers")

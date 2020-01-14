@@ -1,7 +1,6 @@
-import gdb
-
 import auto_load._common as helpers
 from auto_load._common import SavingDecorator, ignore
+
 
 class LockDecorator(SavingDecorator):
     """ Show what thread we're waiting on to release the mutex, e.g.
@@ -13,7 +12,7 @@ class LockDecorator(SavingDecorator):
     #10 0x00007ffff248f3fe in lloadd_io_task (ptr=0x7fffec0018d0) at daemon.c:1404
     """
     def function(self):
-        name = original = super().function()
+        name = super().function()
 
         frame = self.inferior_frame()
         mutex = frame.read_var('mutex')
@@ -30,6 +29,7 @@ class LockDecorator(SavingDecorator):
 
         return name
 
+
 class PThreadFrameFilter(helpers.FrameFilter):
     drop_prefixes = ['__pthread_']
     decorators = {
@@ -39,6 +39,7 @@ class PThreadFrameFilter(helpers.FrameFilter):
         '__pthread_mutex_cond_lock': LockDecorator,
         '__pthread_mutex_lock_full': LockDecorator,
     }
+
 
 def new_objfile(event):
     ff = PThreadFrameFilter()

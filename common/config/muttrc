@@ -5,3 +5,8 @@ mailboxes ! `find ~/.maildir -name .spam -prune -o -type d -name "cur" -printf "
 set from="Ondřej Kuzník <ondra@mistotebe.net>"
 
 set smtp_url="smtp://ondra@moya.mistotebe.net"
+
+mailboxes imaps://ondrej.kuznik@atlas.cz@imap.centrum.cz/
+mailboxes imaps://cargill@atlas.cz@imap.centrum.cz/
+mailboxes imap://ondra@dodo.mistotebe.net/
+mailboxes imaps://mistotebe@imap.gmail.com/

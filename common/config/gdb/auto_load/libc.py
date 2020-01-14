@@ -1,7 +1,6 @@
-import gdb
-
 import auto_load._common as helpers
 from auto_load._common import GDBArgument, SavingDecorator, ignore
+
 
 class AssertDecorator(SavingDecorator):
     def function(self):
@@ -17,6 +16,7 @@ class AssertDecorator(SavingDecorator):
     def line(self):
         pass
 
+
 class LibCFrameFilter(helpers.FrameFilter):
     drop_prefixes = [ '__GI_', '__lll_', '_IO_' ]
     decorators = {
@@ -25,6 +25,7 @@ class LibCFrameFilter(helpers.FrameFilter):
 
         'clone': ignore,
     }
+
 
 def new_objfile(event):
     ff = LibCFrameFilter()

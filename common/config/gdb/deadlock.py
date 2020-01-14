@@ -2,6 +2,7 @@
 
 import gdb
 
+
 class ThreadEntry:
     "Representable thread object"
 
@@ -23,6 +24,7 @@ class ThreadEntry:
 
     def __repr__(self):
         return "Thread #{thread.num} (LWP {self.lwp_id})".format(self=self, thread=self.thread)
+
 
 class WaiterEntry(ThreadEntry):
     "Thread object representing a vertex+its outbound edges in a LockGraph"
@@ -84,6 +86,7 @@ class WaiterEntry(ThreadEntry):
         self.owner_lwp_id = int(self.mutex['__data']['__owner'])
         return self.owner_lwp_id
 
+
 class LockGraph:
     "Generate the lock waiting graph for a given inferior"
 
@@ -132,6 +135,7 @@ class LockGraph:
                 self.cycles.add(parent)
 
         return thread.root
+
 
 class CommandDeadlockPrint(gdb.Command):
     """Prints threads that participate in a deadlock, e.g.

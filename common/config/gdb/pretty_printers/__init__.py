@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-from .openldap import register
-from .lloadd import register
-from .posix import register
-from .libevent import register
+from . import openldap
+from . import lloadd
+from . import posix
+from . import libevent
+
 
 def register():
     openldap.register(None)

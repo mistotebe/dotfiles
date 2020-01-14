@@ -4,6 +4,7 @@ import auto_load._common as helpers
 from auto_load._common import ignore
 from auto_load.libpthread import LockDecorator
 
+
 def set_thread_name(name, decorator=None):
     def f(frame, *args, **kwargs):
         gdb.selected_thread().name = name
@@ -11,6 +12,7 @@ def set_thread_name(name, decorator=None):
             frame = decorator(frame, *args, **kwargs)
         return frame
     return f
+
 
 class OpenLDAPFrameFilter(helpers.FrameFilter):
     decorators = {
@@ -29,6 +31,7 @@ class OpenLDAPFrameFilter(helpers.FrameFilter):
         #'ldap_pvt_thread_rdwr_wlock': RWLockDecorator,
         #'ldap_pvt_thread_rdwr_wtrylock': RWLockDecorator,
     }
+
 
 def new_objfile(event):
     ff = OpenLDAPFrameFilter()

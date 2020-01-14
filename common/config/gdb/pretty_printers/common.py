@@ -6,12 +6,14 @@ import gdb.types
 
 from collections import OrderedDict
 
+
 class NullPrinter:
     def __init__(self, val):
         pass
 
     def to_string(self):
         return "NULL"
+
 
 class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
     class RegexpPointerSubprinter(gdb.printing.RegexpCollectionPrettyPrinter.RegexpSubprinter):
@@ -53,6 +55,7 @@ class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
     def add_pointer_printer(self, name, regexp, gen_printer):
         return self.add_printer(name, regexp, gen_printer, pointer=True)
 
+
 class StructPrinter:
     def __init__(self, value):
         self.value = value
@@ -70,6 +73,7 @@ class StructPrinter:
                 result[name] = value[name]
 
         return result
+
 
 class AnnotatedStructPrinter(StructPrinter):
     def children_dict(self, fields=None):

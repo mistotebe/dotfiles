@@ -113,9 +113,5 @@ alternates '@mistotebe\.net$' '^mistotebe@gmail\.com$' '^cargill@atlas\.cz$' '^o
 
 #mailboxes ! `find ~/.mail -type f -printf '%p '`
 #mailboxes ! `find ~/.maildir -name .spam -prune -o -type d -name "cur" -printf "'%h' "`
-mailboxes imaps://ondrej.kuznik@atlas.cz@imap.centrum.cz/
-mailboxes imaps://cargill@atlas.cz@imap.centrum.cz/
-mailboxes imap://ondra@dodo.mistotebe.net/
-mailboxes imaps://mistotebe@imap.gmail.com/
 
 source ~/.mutt.d/colours

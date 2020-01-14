@@ -8,8 +8,11 @@ print("python version is "+sys.version)
 
 sys.path.append(os.path.expanduser('~/.gdb'))
 
+import gdb
+
 import pretty_printers
 import deadlock
+
 
 class ObjFileHandler(object):
     def __init__(self):
@@ -29,11 +32,12 @@ class ObjFileHandler(object):
             try:
                 mod = import_module("auto_load." + basename)
                 self.loaded_modules[basename] = mod
-            except ImportError as e:
+            except ImportError:
                 return
         f = getattr(mod, "new_objfile")
         if f:
             f(event)
+
 
 new_objfile_handler = ObjFileHandler()
 

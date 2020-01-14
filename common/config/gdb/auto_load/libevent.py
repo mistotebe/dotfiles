@@ -1,7 +1,6 @@
-import gdb
-
 import auto_load._common as helpers
 from auto_load._common import ignore
+
 
 class LibEventFrameFilter(helpers.FrameFilter):
     decorators = {
@@ -12,6 +11,7 @@ class LibEventFrameFilter(helpers.FrameFilter):
         'event_process_active_single_queue': ignore,
         'event_process_active': ignore,
     }
+
 
 def new_objfile(event):
     ff = LibEventFrameFilter()

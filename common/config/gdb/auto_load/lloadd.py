@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-import gdb
-
 import auto_load._common as helpers
 from auto_load._common import ignore
+
 
 class LloadFrameFilter(helpers.FrameFilter):
     decorators = {
@@ -12,6 +11,7 @@ class LloadFrameFilter(helpers.FrameFilter):
 
         'handle_pdus': ignore,
     }
+
 
 def new_objfile(event):
     ff = LloadFrameFilter()
