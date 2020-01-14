@@ -43,6 +43,7 @@ new_objfile_handler = ObjFileHandler()
 
 gdb.events.new_objfile.connect(new_objfile_handler)
 
+# TODO: remaining printers until we can detect statically loaded libraries
 pretty_printers.register()
 
 deadlock.CommandDeadlockPrint()

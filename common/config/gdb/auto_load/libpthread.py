@@ -1,6 +1,8 @@
 import auto_load._common as helpers
 from auto_load._common import SavingDecorator, ignore
 
+from pretty_printers.posix import register
+
 
 class LockDecorator(SavingDecorator):
     """ Show what thread we're waiting on to release the mutex, e.g.
@@ -45,3 +47,4 @@ def new_objfile(event):
     ff = PThreadFrameFilter()
     event.new_objfile.frame_filters[ff.name] = ff
     print(ff.name+" loaded")
+    register(event.new_objfile)
