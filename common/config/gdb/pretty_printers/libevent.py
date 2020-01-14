@@ -33,6 +33,8 @@ class EventPrinter:
 
     def __init__(self, event):
         self.event = event
+        if not event.type.target().fields(): # no symbols for libevent
+            raise NotImplementedError
         self.flags = event['ev_evcallback']['evcb_flags']
 
     def to_string(self):

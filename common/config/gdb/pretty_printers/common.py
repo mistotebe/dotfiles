@@ -42,7 +42,10 @@ class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
                 #print("Selecting printer", printer.name, "for", "pointer" if pointer else "non-pointer", "type", val.type)
                 if not val:
                     return NullPrinter(val)
-                return printer.gen_printer(val)
+                try:
+                    return printer.gen_printer(val)
+                except NotImplementedError:
+                    pass
 
         # Fallback to None
         return None
@@ -91,6 +94,8 @@ class AnnotatedStructPrinter(StructPrinter):
                 del result[name]
 
         for name in short:
-            result[name] = gdb.default_visualizer(result[name]).to_string()
+            visualiser = gdb.default_visualizer(result[name])
+            if visualiser:
+                result[name] = visualiser.to_string()
 
         return result

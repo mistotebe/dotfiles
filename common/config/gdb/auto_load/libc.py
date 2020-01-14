@@ -7,8 +7,11 @@ class AssertDecorator(SavingDecorator):
         return "failing assertion"
 
     def frame_args(self):
-        assertion = self.inferior_frame().read_var('assertion')
-        return [GDBArgument('assertion', assertion)]
+        try:
+            assertion = self.inferior_frame().read_var('assertion')
+            return [GDBArgument('assertion', assertion)]
+        except ValueError:
+            pass
 
     def filename(self):
         pass
@@ -21,6 +24,7 @@ class LibCFrameFilter(helpers.FrameFilter):
     drop_prefixes = [ '__GI_', '__lll_', '_IO_' ]
     decorators = {
         '__GI___assert_fail': AssertDecorator,
+        '__assert_fail': AssertDecorator,
         '__assert_fail_base': ignore,
 
         'clone': ignore,
