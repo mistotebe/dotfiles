@@ -30,10 +30,11 @@ class FrameFilter:
     drop_prefixes = []
     decorators = {}
 
-    def __init__(self, name=None, priority=100, enabled=True):
+    def __init__(self, name=None, priority=100, enabled=True, objfile=None):
         self.name = name or self.__class__.__name__
         self.priority = priority
         self.enabled = enabled
+        self.objfile = objfile
 
     def filter(self, frame_iterator):
         for frame in frame_iterator:
