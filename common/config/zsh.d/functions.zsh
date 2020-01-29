@@ -5,12 +5,6 @@ cgrep () {
     return $pipestatus[1]
 }
 
-jump() {
-    local host="$1"
-    shift
-    ssh -o ProxyCommand="ssh $host -W %h:%p" "$@"
-}
-
 vgrep() {
     vim -q <(grep -I -n "$@")
 }
@@ -33,4 +27,17 @@ refreshTmuxEnvironment() {
 
 argv0dup() {
     "$1" "$@"
+}
+
+libtool () {
+    if !git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        exec "$@"
+    fi
+
+    local worktree=$(git rev-parse --show-toplevel)
+    if [ -x "${worktree}"/libtool ]; then
+        "${worktree}"/libtool --mode=execute "$@"
+    fi
+
+    return 127
 }

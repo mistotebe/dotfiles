@@ -205,7 +205,8 @@ endfunction
 
 au BufWritePost * call ModeChange()
 
-"hi SpecialKey ctermfg=238
+hi SpecialKey ctermbg=234
+hi cCommentString ctermfg=30
 
 " make diff highlight actually usable
 hi DiffChange ctermbg=235
