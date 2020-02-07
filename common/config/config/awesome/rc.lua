@@ -144,7 +144,16 @@ mytextclock = wibox.widget.textclock("%d. %m. %Y %k.%M")
 
 -- Create a wibox for each screen and add it
 local taglist_buttons = gears.table.join(
-                    awful.button({ }, 1, function(t) t:view_only() end),
+                    awful.button({ }, 1, function(t)
+                                              local i = t.index
+                                              for s in screen do
+                                                  local tag = s.tags[i]
+                                                  if tag then
+                                                      tag:view_only()
+                                                  end
+                                              end
+                                              client.focus = awful.client.focus.history.get(t.screen, 0)
+                                          end),
                     awful.button({ modkey }, 1, function(t)
                                               if client.focus then
                                                   client.focus:move_to_tag(t)
@@ -156,8 +165,8 @@ local taglist_buttons = gears.table.join(
                                                   client.focus:toggle_tag(t)
                                               end
                                           end),
-                    awful.button({ }, 4, function(t) awful.tag.viewnext(t.screen) end),
-                    awful.button({ }, 5, function(t) awful.tag.viewprev(t.screen) end)
+                    awful.button({ }, 4, function(t) awful.tag.viewprev(t.screen) end),
+                    awful.button({ }, 5, function(t) awful.tag.viewnext(t.screen) end)
                 )
 
 local tasklist_buttons = gears.table.join(
@@ -188,11 +197,11 @@ local tasklist_buttons = gears.table.join(
                                               end
                                           end),
                      awful.button({ }, 4, function ()
-                                              awful.client.focus.byidx(1)
+                                              awful.client.focus.byidx(-1)
                                               if client.focus then client.focus:raise() end
                                           end),
                      awful.button({ }, 5, function ()
-                                              awful.client.focus.byidx(-1)
+                                              awful.client.focus.byidx(1)
                                               if client.focus then client.focus:raise() end
                                           end))
 
@@ -267,8 +276,8 @@ end)
 -- {{{ Mouse bindings
 root.buttons(gears.table.join(
     awful.button({ }, 3, function () mymainmenu:toggle() end),
-    awful.button({ }, 4, awful.tag.viewnext),
-    awful.button({ }, 5, awful.tag.viewprev)
+    awful.button({ }, 4, awful.tag.viewprev),
+    awful.button({ }, 5, awful.tag.viewnext)
 ))
 -- }}}
 
@@ -319,6 +328,18 @@ globalkeys = gears.table.join(
             if client.focus then client.focus:raise() end
         end,
         {description = "focus next by index", group = "client"}
+    ),
+    awful.key({ modkey,           }, "Up",
+        function ()
+            awful.screen.focus_relative(-1)
+        end,
+        {description = "focus previous screen", group = "screen"}
+    ),
+    awful.key({ modkey,           }, "Down",
+        function ()
+            awful.screen.focus_relative( 1)
+        end,
+        {description = "focus next screen", group = "screen"}
     ),
     -- Layout manipulation
     awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end,
@@ -493,11 +514,15 @@ for i = 1, keynumber do
         -- View tag only.
         awful.key({ altkey }, "F" .. i,
                   function ()
-                        local screen = awful.screen.focused()
-                        local tag = screen.tags[i]
-                        if tag then
-                           tag:view_only()
+                        focused = awful.screen.focused()
+                        for s in screen do
+                            local tag = s.tags[i]
+                            if tag then
+                                tag:view_only()
+                            end
                         end
+                        awful.screen.focus(screen.primary)
+                        client.focus = awful.client.focus.history.get(focused, 0)
                   end,
                   {description = "view tag #"..i, group = "tag"}),
         -- Toggle tag.
@@ -614,8 +639,12 @@ awful.rules.rules = {
     },
 
     -- Set Firefox to always map on the tag named "2" on screen 1.
-    -- { rule = { class = "Firefox" },
-    --   properties = { screen = 1, tag = "2" } },
+    { rule = { class = "Firefox" },
+        properties = { screen = 1, tag = "browse" } },
+    { rule = { class = "Chromium" },
+        properties = { screen = 2, tag = "browse" } },
+    { rule = { class = "Psi" },
+        properties = { screen = 1, tag = "chat" } },
 }
 -- }}}
 
