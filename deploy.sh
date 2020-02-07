@@ -69,6 +69,7 @@ run() {
 	popd >/dev/null
 }
 
+cd "$(dirname "$0")"
 run deploy "local/$(hostname)"
 run deploy common
 
