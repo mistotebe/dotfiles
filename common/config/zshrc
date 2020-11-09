@@ -39,7 +39,10 @@ setopt prompt_subst
 setopt hist_ignore_dups hist_save_no_dups hist_expire_dups_first
 setopt print_exit_value
 
-bindkey '^H' backward-delete-word
+zle -N backward-kill-word-granular backward-kill-word-match
+zstyle ":zle:backward-kill-word-granular" word-style bash
+
+bindkey '^H' backward-kill-word-granular
 bindkey '^[[3;5~' delete-word
 bindkey '^[[1;5D' backward-word
 bindkey '^[[1;5C' forward-word
@@ -47,6 +50,9 @@ bindkey '^[[1;2A' history-beginning-search-backward
 bindkey '^[[1;2B' history-beginning-search-forward
 bindkey '^[[H' beginning-of-line
 bindkey '^[[F' end-of-line
+
+autoload -U select-word-style
+select-word-style shell
 
 export PS1="%n@%m:%~%# "
 

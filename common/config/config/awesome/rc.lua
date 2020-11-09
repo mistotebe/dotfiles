@@ -642,9 +642,9 @@ awful.rules.rules = {
     { rule = { class = "Firefox" },
         properties = { screen = 1, tag = "browse" } },
     { rule = { class = "Chromium" },
-        properties = { screen = 2, tag = "browse" } },
+        properties = { screen = "eDP-1", tag = "browse" } },
     { rule = { class = "Psi" },
-        properties = { screen = 1, tag = "chat" } },
+        properties = { screen = "eDP-1", tag = "chat" } },
 }
 -- }}}
 
@@ -675,6 +675,9 @@ client.connect_signal("request::titlebars", function(c)
         awful.button({ }, 3, function()
             c:emit_signal("request::activate", "titlebar", {raise = true})
             awful.mouse.client.resize(c)
+        end),
+        awful.button({ modkey }, 1, function()
+            c:move_to_screen()
         end)
     )
 
@@ -713,4 +716,65 @@ client.connect_signal("focus", function(c) c.border_color = beautiful.border_foc
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
 
-os.execute("xmodmap ~/.Xmodmap")
+function hash_screens(removed)
+    local result = {}
+    if removed then
+        for name, _ in pairs(removed.outputs) do
+            table.insert(result, name)
+        end
+    end
+    for s in screen do
+        for name, _ in pairs(s.outputs) do
+            table.insert(result, name)
+        end
+    end
+    table.sort(result)
+    return table.concat(result, ',')
+end
+function location_by_name(screen_name, tag_name)
+    for s in screen do
+        for output_name, _ in pairs(s.outputs) do
+            if output_name == screen_name then
+                return s, awful.tag.find_by_name( s, tag_name )
+            end
+        end
+    end
+end
+function get_place(c)
+    for name, _ in pairs(c.screen.outputs) do
+        return { name, c.first_tag.name }
+    end
+end
+client.connect_signal("request::tag", function(c, arg, context)
+    if context and context.reason == "screen-removed" then
+        if not c.saved_location then c.saved_location = {} end
+        c.saved_location[hash_screens(c.screen)] = get_place(c)
+    end
+end)
+
+docked_screen = "DP-1"
+screen.connect_signal("list", function()
+    local hash = hash_screens()
+    for _, c in pairs(client.get()) do
+        if c.saved_location and c.saved_location[hash] then
+            local s, t = location_by_name(table.unpack(c.saved_location[hash]))
+            c:move_to_tag(t)
+        end
+    end
+    if screen.primary.outputs[docked_screen] then
+        awful.spawn("numlockx on")
+        awful.spawn.easy_async("pgrep xbindkeys", function(stdout, stderr, reason, exit_code)
+            if exit_code == 1 then
+                awful.spawn("xbindkeys_autostart") -- mouse -> keyboard mappings
+            end
+        end)
+        naughty.notify({ title = "Docked again" })
+    else
+        awful.spawn("numlockx off")
+        awful.spawn("pkill xbindkeys")
+        --awful.spawn("xmodmap .Xmodmap")
+        naughty.notify({ title = "Undock complete" })
+    end
+end)
+
+-- os.execute("xmodmap ~/.Xmodmap")

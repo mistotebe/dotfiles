@@ -43,6 +43,7 @@ set shiftwidth=4
 set shiftround
 set wildmode=longest,list:longest,list:full
 set mouse=
+set clipboard=unnamedplus
 
 "analogous to D
 nnoremap Y y$

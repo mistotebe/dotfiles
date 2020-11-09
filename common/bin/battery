@@ -2,7 +2,7 @@
 
 print_status()
 {
-    BATTERY=$(acpi -b | grep -o "[[:digit:]]*%")
+    BATTERY=$(acpi -b | grep -o "[[:digit:]]*%" | sort -n | tail -1)
     number=${BATTERY%\%}
     if acpi -a | grep -q off || { test -n "$number" && { test "$number" -le 50 || test "$number" -ge 85; }; }; then
         if test "$number" -gt 75; then
