@@ -3,7 +3,7 @@
 import gdb
 import gdb.printing
 
-from pretty_printers.common import CollectionPrinter, AnnotatedStructPrinter
+from pretty_printers.common import CollectionPrinter, AnnotatedStructPrinter, type_to_fields_dict
 
 
 LDAP_MSG_TAGS = {
@@ -180,7 +180,7 @@ class ConnectionPrinter(AnnotatedStructPrinter):
 class OperationPrinter(AnnotatedStructPrinter):
     exclude = ['o_ber', 'o_request']
     exclude_false = ['o_saved_msgid', 'o_last_response', 'o_freeing',
-            'o_pin_id']
+                     'o_pin_id']
     short = ['o_client', 'o_upstream']
 
     def to_string(self):

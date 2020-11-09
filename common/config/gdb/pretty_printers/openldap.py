@@ -306,9 +306,16 @@ class OperationPrinter(AnnotatedStructPrinter):
 def finish_printer(printer):
     #mutex = gdb.lookup_type('pthread_mutex_t')
 
-    condition = gdb.lookup_type('pthread_cond_t')
-    printer.add_printer('condition', r'^ldap_pvt_thread_cond_t$',
-                        gdb.default_visualizer(condition))
+    try:
+        condition_type = gdb.lookup_type('pthread_cond_t')
+        # only way to get a value of a given type?
+        condition = condition_type.optimized_out()
+        visualiser = gdb.default_visualizer(condition)
+        if visualiser:
+            printer.add_printer('condition', r'^ldap_pvt_thread_cond_t$',
+                                gdb.default_visualizer(condition))
+    except gdb.error:
+        pass
 
 
 def register(objfile):

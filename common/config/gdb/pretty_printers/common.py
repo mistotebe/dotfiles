@@ -7,6 +7,19 @@ import gdb.types
 from collections import OrderedDict
 
 
+def target_type(value):
+    if isinstance(value, gdb.Value):
+        value = value.type
+    typ = value
+    while typ.code is gdb.TYPE_CODE_PTR:
+        typ = typ.target()
+    return typ
+
+def type_to_fields_dict(typ):
+    typ = target_type(typ)
+    return {field.name: field for field in typ.fields()}
+
+
 class NullPrinter:
     def __init__(self, val):
         pass
@@ -69,8 +82,8 @@ class StructPrinter:
         result = OrderedDict()
 
         if fields is None:
-            for field in value.type.fields():
-                result[field.name] = value[field.name]
+            for field in target_type(value).fields():
+                result[field.name] = value[field]
         else:
             for name in fields:
                 result[name] = value[name]
@@ -86,16 +99,14 @@ class AnnotatedStructPrinter(StructPrinter):
         exclude_false = getattr(self, 'exclude_false', [])
         short = getattr(self, 'short', [])
 
-        for name in exclude:
-            result.pop(name, None)
-
-        for name in exclude_false:
-            if name in result and not result[name]:
+        for name in list(result.keys()):
+            if name in exclude:
                 del result[name]
-
-        for name in short:
-            visualiser = gdb.default_visualizer(result[name])
-            if visualiser:
-                result[name] = visualiser.to_string()
+            elif name in exclude_false and not result[name]:
+                del result[name]
+            elif name in short:
+                visualiser = gdb.default_visualizer(result[name])
+                if visualiser:
+                    result[name] = visualiser.to_string()
 
         return result
