@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import sys
+
+import pygit2
+
+
+def get_checkout_for_branch(repo, branch):
+    for name in repo.list_worktrees():
+        worktree = repo.lookup_worktree(name)
+        subrepo = pygit2.repository.Repository(worktree.path)
+        if branch.name == subrepo.head.name:
+            return worktree.path
+    return None
+
+
+path = pygit2.discover_repository('.')
+if not path:
+    raise SystemExit("Not in a git repo")
+
+repo = pygit2.repository.Repository(path)
+
+if len(sys.argv) > 1:
+    branches = sys.argv[1:]
+else:
+    branches = repo.listall_branches()
+
+skipped = []
+
+for name in branches:
+    branch = repo.branches[name]
+    upstream = branch.upstream
+
+    if not upstream:
+        continue
+
+    # up to date?
+    if branch.target == upstream.target or \
+            repo.descendant_of(branch.target, upstream.target):
+        continue
+
+    if not repo.descendant_of(upstream.target, branch.target):
+        print("Not rebasing", branch.shorthand)
+        skipped.append(branch.shorthand)
+        continue
+
+    if branch.is_checked_out():
+        path = get_checkout_for_branch(repo, branch)
+        if repo.head.name == branch.name:
+            print(branch.shorthand, "is checked out here")
+        elif path:
+            print(branch.shorthand, "is checked out at", path)
+        else:
+            print(branch.shorthand, "is checked out somewhere")
+        skipped.append(branch.shorthand)
+        continue
+
+    print("Fast-forwarding", branch.shorthand, branch.peel().short_id,
+          '->', upstream.peel().short_id)
+    branch.set_target(upstream.target)
+
+if skipped:
+    raise SystemExit(f"Skipped some branches: {skipped}")

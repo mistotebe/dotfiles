@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import subprocess
+
+import pygit2
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--base", help="Manually specify the start point")
+parser.add_argument("target", help="The upstream branch")
+parser.add_argument("branch", nargs="?",
+                    help="Manually specify the branch to reparent")
+
+options = parser.parse_args()
+
+path = pygit2.discover_repository('.')
+if not path:
+    raise SystemExit("Not in a git repo")
+
+repo = pygit2.repository.Repository(path)
+onto = repo.revparse_single(options.target).oid
+
+if not options.branch:
+    if repo.head_is_detached:
+        raise SystemExit("No branch specified")
+    options.branch = repo.head.shorthand
+branch = repo.branches[options.branch]
+
+if options.base:
+    base = repo.revparse_single(options.base).oid
+else:
+    base = repo.merge_base(branch.target, onto)
+
+print({"base": base, "target": options.target, "branch": options.branch})
+
+# up to date?
+if branch.target == onto or repo.descendant_of(branch.target, onto):
+    print("Nothing to do")
+    raise SystemExit(0)
+
+orig_head = None
+if not repo.head_is_detached:
+    orig_head = repo.head.shorthand
+
+dependencies = {}
+parents = {}
+aliases = {}
+
+for name in repo.listall_branches():
+    b = repo.branches[name]
+    assert b.shorthand == name
+    print(name)
+
+    if not repo.descendant_of(b.target, branch.target):
+        continue
+
+    parent = branch
+    for candidate_name in list(parents.keys()):
+        print("\t", parent.shorthand, candidate_name)
+        candidate = repo.branches[candidate_name]
+        if b.target == candidate.target:
+            parent = candidate  # hack for aliases
+            break
+        elif parent.target == candidate.target:
+            continue
+
+        if repo.descendant_of(b.target, candidate.target):
+            # is it closer to us than the current parent?
+            if repo.descendant_of(candidate.target, parent.target):
+                parent = candidate
+            elif not repo.descendant_of(parent.target, candidate.target):
+                raise SystemExit(
+                        f"Branch {b.shorthand} is derived from both "
+                        f"{parent.shorthand} and {candidate.shorthand}")
+        elif repo.descendant_of(candidate.target, b.target):
+            # do we lie between candidate and its parent?
+            c_parent_name = parents[candidate_name]
+            c_parent = repo.branches[c_parent_name]
+            if repo.descendant_of(b.target, c_parent.target):
+                dependencies[c_parent_name].remove(candidate_name)
+                parents[candidate_name] = name
+                dependencies.setdefault(name, []).append(candidate_name)
+            elif not repo.descendant_of(c_parent.target, b.target):
+                raise SystemExit(
+                    f"Branch {candidate.shorthand} is derived from both "
+                    f"{c_parent.shorthand} and {b.shorthand}")
+
+    if b.target == parent.target:
+        aliases.setdefault(parent.shorthand, []).append(name)
+        continue
+
+    parents[name] = parent.shorthand
+    dependencies.setdefault(parent.shorthand, []).append(name)
+    print("dependencies", dependencies)
+    print("parents", parents)
+    print("aliases", aliases)
+
+backup = {}
+
+
+def rebase(branch, base, onto):
+    original_target = branch.target
+    subprocess.run(["git", "checkout", branch.shorthand]).check_returncode()
+    try:
+        subprocess.run(["git", "rebase", "--onto", str(onto), str(base),
+                        branch.shorthand]).check_returncode()
+    except subprocess.CalledProcessError:
+        while True:
+            answer = input("Rebase failed, want to help? (y/N) ").lower()
+            if not answer or "no".startswith(answer):
+                raise
+            elif not "yes".startswith(answer):
+                continue
+
+            finished = False
+            reraise = False
+            while not finished:
+                subprocess.run([os.getenv('SHELL')])
+                try:
+                    subprocess.run(["git", "rebase", "--continue"]).\
+                            check_returncode()
+                    finished = True
+                except subprocess.CalledProcessError:
+                    while True:
+                        answer = input("Still failing, keep going? (Y/n) ").\
+                                lower()
+                        if "no".startswith(answer):
+                            reraise = True
+                            break
+                        elif not answer or "yes".startswith(answer):
+                            break
+            if reraise:
+                raise
+            break
+    backup[branch.shorthand] = original_target
+    new_target = repo.branches[branch.shorthand].target
+
+    for name in aliases.get(branch.shorthand, []):
+        alias = repo.branches[name]
+        alias.set_target(new_target)
+        backup[name] = original_target
+
+    for name in dependencies.get(branch.shorthand, []):
+        dependency = repo.branches[name]
+        rebase(dependency, original_target, new_target)
+
+
+try:
+    stash = None
+    try:
+        stash = repo.stash(repo.default_signature, 'WIP: stashing')
+    except KeyError:
+        pass
+
+    rebase(branch, base, onto)
+except subprocess.CalledProcessError:
+    subprocess.run(['git', 'rebase', '--abort']).check_returncode()
+    for name, original_target in backup.items():
+        branch = repo.branches[name]
+        branch.set_target(original_target)
+    raise
+finally:
+    if orig_head and repo.head.shorthand != orig_head:
+        subprocess.run(['git', 'checkout', orig_head]).check_returncode()
+
+    if stash:
+        repo.stash_pop()
