@@ -126,14 +126,173 @@ class AttrDescPrinter:
         return self.name
 
 
+class AttributePrinter(AnnotatedStructPrinter):
+    """Pretty printer for Attribute"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def to_string(self):
+        return self.value['a_desc']
+
+    def children(self):
+        return self.value['a_desc']
+
+
 class OCPrinter:
     """Pretty printer for ObjectClass"""
+    short = ['a_next']
+    exclude_false = ['a_flags', 'a_comp_data']
 
     def __init__(self, oc):
         self.oc = oc
 
     def to_string(self):
-        return self.oc['soc_cname']
+        result = self.children_dict()
+
+        if not result['a_nvals'] or result['a_vals'] == result['a_nvals']:
+            result.pop('a_nvals')
+
+        return result.items()
+
+
+class ModificationPrinter(AnnotatedStructPrinter):
+    """Pretty printer for Modification"""
+    exclude = ['sm_nvalues', 'sm_type']
+    exclude_false = ['sm_flags']
+
+    op = {
+        0x0: 'add',  # LDAP_MOD_ADD
+        0x1: 'delete',  # LDAP_MOD_DELETE
+        0x2: 'replace',  # LDAP_MOD_REPLACE
+        0x3: 'increment',  # LDAP_MOD_INCREMENT
+        0x1000: 'softadd',  # SLAP_MOD_SOFTADD
+        0x1001: 'softdel',  # SLAP_MOD_SOFTDEL
+        0x1002: 'addifnotpresent',  # SLAP_MOD_ADD_IF_NOT_PRESENT
+    }
+
+    def __init__(self, value):
+        self.value = value
+
+    def to_string(self):
+        pass
+
+    def children(self):
+        result = self.children_dict()
+
+        flags = result.get('sm_flags')
+
+        op = int(result.get('sm_op'))
+        if op in self.op:
+            result = {self.op[op]: [result['sm_values'][i]
+                      for i in range(int(result['sm_numvals']))]}
+
+            if flags:
+                result['flags'] = flags
+
+        return result.items()
+
+
+class ModificationsPrinter:
+    """Pretty printer for Modifications"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def to_string(self):
+        pass
+
+    def display_hint(self):
+        return "list"
+
+    def children(self):
+        result = []
+        current = self.value
+
+        while current:
+            result.append(current['sml_mod'])
+            current = current['sml_next']
+
+        return result
+
+
+class AVAPrinter(AnnotatedStructPrinter):
+    """Pretty printer for AttributeAssertion"""
+    exclude_false = ['aa_cf']
+
+    operator = {
+        0xa3: '=',   # LDAP_FILTER_EQUALITY
+        0xa5: '>=',  # LDAP_FILTER_GE
+        0xa6: '<=',  # LDAP_FILTER_LE
+        0xa8: '~=',  # LDAP_FILTER_APPROX
+    }
+
+    def __init__(self, value, choice=0xa3):
+        self.value = value
+        self.choice = choice
+
+        value_printer = gdb.default_visualizer(self.value['aa_value'])
+        self.string_like = choice in self.operator \
+            and value_printer.string_like
+
+    def to_string(self):
+        # Only pretty-print if we can have a nice string
+        if not self.string_like:
+            return None
+
+        return "{}{}{}".format(self.value['aa_desc'],
+                               self.operator[self.choice],
+                               self.value['aa_value'])
+
+    def children(self):
+        if self.string_like:
+            return None
+        return self.children_dict().items()
+
+
+class FilterPrinter(AnnotatedStructPrinter):
+    """Pretty printer for Filter"""
+
+    exclude_false = ['f_next']
+    short = ['f_next']
+
+    operator = {
+        0x0: ['SLAPD_FILTER_COMPUTED', '', 'f_un_result'],
+        0xa0: ['LDAP_FILTER_AND', '&', 'f_un_complex'],
+        0xa1: ['LDAP_FILTER_OR', '|', 'f_un_complex'],
+        0xa2: ['LDAP_FILTER_NOT', '!', 'f_un_complex'],
+        0xa3: ['LDAP_FILTER_EQUALITY', 'AVAPrinter', 'f_un_ava'],
+        0xa4: ['LDAP_FILTER_SUBSTRINGS', 'SubstringsFilter', 'f_un_ssa'],
+        0xa5: ['LDAP_FILTER_LE', 'AVAPrinter', 'f_un_ava'],
+        0xa6: ['LDAP_FILTER_GE', 'AVAPrinter', 'f_un_ava'],
+        0x87: ['LDAP_FILTER_PRESENT', '*', 'f_un_desc'],
+        0xa8: ['LDAP_FILTER_APPROX', 'AVAPrinter', 'f_un_ava'],
+        0xa9: ['LDAP_FILTER_EXT', 'ExtenderFilterPrinter', 'f_un_mra'],
+        0x8000: ['SLAPD_FILTER_UNDEFINED', 'UNDEFINED', None],
+    }
+
+    def __init__(self, value):
+        self.value = value
+
+    def to_string(self):
+        readable_name, _, _ = self.operator.get(int(self.value['f_choice']),
+                                                [None, None, None])
+        return readable_name
+
+    def children(self):
+        result = self.children_dict()
+        choice = int(result.pop('f_choice'))
+
+        _, sigil, member = self.operator.get(choice,
+                                             [None, None, None])
+
+        if member is not None:
+            part = result['f_un']
+            if member:
+                result['f_un.'+member] = part[member]
+            del result['f_un']
+
+        return result.items()
 
 
 class EntryPrinter:
@@ -232,6 +391,8 @@ class DBPrinter(AnnotatedStructPrinter):
         'SYNC_SUBENTRY': 0x40000,
         'MULTI_SHADOW': 0x80000,
         'DISABLED': 0x100000,
+        'LASTBIND': 0x200000,
+        'OPEN': 0x400000,
     }
 
     def to_string(self):
@@ -330,6 +491,7 @@ def register(objfile):
     printer.add_printer('mutex', r'^ldap_pvt_thread_mutex_t$',
                         LockPrinter)
     printer.add_printer('Sockaddr', r'^Sockaddr$', SockAddrPrinter)
+    printer.add_printer('Filter', r'^Filter$', FilterPrinter)
     printer.add_printer('ThreadPool', r'^ldap_pvt_thread_pool_t$',
                         PoolPrinter)
 
@@ -341,6 +503,10 @@ def register(objfile):
                                 OCPrinter)
     printer.add_pointer_printer('Entry', r'^Entry$',
                                 EntryPrinter)
+    printer.add_pointer_printer('AttributeAssertion', r'^AttributeAssertion$',
+                                AVAPrinter)
+    printer.add_pointer_printer('Filter', r'^Filter$',
+                                FilterPrinter)
 
     printer.add_pointer_printer('ThreadTask', r'^ldap_int_thread_task_s$',
                                 TaskPrinter)

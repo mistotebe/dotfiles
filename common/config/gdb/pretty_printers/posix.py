@@ -22,16 +22,45 @@ class TimevalPrinter:
         self.tv = self.sec + self.usec / 1000000
 
     def to_string(self):
-        if self.tv >= 1:
+        if abs(self.tv) >= 1:
             return "{}s".format(self.tv.normalize())
         else:
             return "{}ms".format((self.tv * 1000).normalize())
 
 
-class SockAddrPrinterIP:
+class SockAddrPrinterGeneric:
+    __family_to_subclass__ = {}
+
+    prefix = 'sa_'
+    typename = 'struct sockaddr'
+
+    def __init_subclass__(cls, /, **kwargs):
+        family = getattr(cls, 'family', None)
+        if family:
+            __class__.__family_to_subclass__[family] = cls
+
+    def __new__(cls, value):
+        if cls is not __class__:
+            return super().__new__(cls)
+
+        family = int(value[cls.prefix + 'family'])
+        subclass = cls.__family_to_subclass__.get(family)
+        if subclass:
+            value = value.cast(gdb.lookup_type(cls.typename))
+            return subclass.__new__(subclass, value)
+
+        raise NotImplementedError
+
     def __init__(self, value):
+        if value.type.name != self.typename:
+            value = value.cast(gdb.lookup_type(self.typename))
         self.value = value
-        self.family = value[self.prefix + 'family']
+
+
+class SockAddrPrinterIP(SockAddrPrinterGeneric):
+    def __init__(self, value):
+        super().__init__(value)
+        assert self.family == self.value[self.prefix + 'family']
         self.addr_type = gdb.lookup_type("char").array(self.addr_len-1)
 
     def address(self):
@@ -48,15 +77,19 @@ class SockAddrPrinterIP:
 
 
 class SockAddrPrinterIPv4(SockAddrPrinterIP):
+    family = AF_INET
     addr_len = 4
     prefix = 'sin_'
     name = 'IPv4'
+    typename = 'struct sockaddr_in'
 
 
 class SockAddrPrinterIPv6(SockAddrPrinterIP):
+    family = AF_INET6
     addr_len = 16
     prefix = 'sin6_'
     name = 'IPv6'
+    typename = 'struct sockaddr_in6'
 
     def to_string(self):
         return "{}=[{}]:{}".format(self.name, self.address(), self.port())
@@ -72,14 +105,18 @@ class SockAddrPrinterIPv6(SockAddrPrinterIP):
         return result.items()
 
 
-class SockAddrPrinterUnix:
+class SockAddrPrinterUnix(SockAddrPrinterGeneric):
+    family = AF_UNIX
+    name = 'UNIX'
+    typename = 'struct sockaddr_un'
+
     def __init__(self, value):
-        self.value = value
-        self.family = value['sun_family']
+        super().__init__(value)
+        self.family = self.value['sun_family']
 
     def to_string(self):
         address = self.value['sun_path']
-        return "UNIX={}".format(address)
+        return "{}={}".format(self.name, address)
 
 
 def register(objfile):
@@ -89,6 +126,7 @@ def register(objfile):
     printer.add_printer('sockaddr_in', r'^sockaddr_in$', SockAddrPrinterIPv4)
     printer.add_printer('sockaddr_in6', r'^sockaddr_in6$', SockAddrPrinterIPv6)
     printer.add_printer('sockaddr_un', r'^sockaddr_un$', SockAddrPrinterUnix)
+    printer.add_printer('sockaddr', r'^sockaddr$', SockAddrPrinterGeneric)
 
     printer.add_pointer_printer('struct timeval', r'^timeval$', TimevalPrinter)
 
