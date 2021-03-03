@@ -3,6 +3,7 @@
 import argparse
 import os
 import subprocess
+import sys
 
 import pygit2
 
@@ -33,8 +34,6 @@ if options.base:
 else:
     base = repo.merge_base(branch.target, onto)
 
-print({"base": base, "target": options.target, "branch": options.branch})
-
 # up to date?
 if branch.target == onto or repo.descendant_of(branch.target, onto):
     print("Nothing to do")
@@ -51,14 +50,12 @@ aliases = {}
 for name in repo.listall_branches():
     b = repo.branches[name]
     assert b.shorthand == name
-    print(name)
 
     if not repo.descendant_of(b.target, branch.target):
         continue
 
     parent = branch
     for candidate_name in list(parents.keys()):
-        print("\t", parent.shorthand, candidate_name)
         candidate = repo.branches[candidate_name]
         if b.target == candidate.target:
             parent = candidate  # hack for aliases
@@ -93,9 +90,6 @@ for name in repo.listall_branches():
 
     parents[name] = parent.shorthand
     dependencies.setdefault(parent.shorthand, []).append(name)
-    print("dependencies", dependencies)
-    print("parents", parents)
-    print("aliases", aliases)
 
 backup = {}
 
@@ -104,9 +98,13 @@ def rebase(branch, base, onto):
     original_target = branch.target
     subprocess.run(["git", "checkout", branch.shorthand]).check_returncode()
     try:
-        subprocess.run(["git", "rebase", "--onto", str(onto), str(base),
-                        branch.shorthand]).check_returncode()
+        git_rebase = subprocess.run(["git", "rebase", "--onto", str(onto),
+                                     str(base), branch.shorthand],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
+        git_rebase.check_returncode()
     except subprocess.CalledProcessError:
+        os.write(sys.stdout.fileno(), git_rebase.stdout)  # it's a byte object
         while True:
             answer = input("Rebase failed, want to help? (y/N) ").lower()
             if not answer or "no".startswith(answer):
