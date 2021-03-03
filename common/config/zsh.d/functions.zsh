@@ -31,14 +31,16 @@ argv0dup() {
     "$1" "$@"
 }
 
-libtool () {
+libtool() {
     if !git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        exec "$@"
+        "$@"
+        return $?
     fi
 
     local worktree=$(git rev-parse --show-toplevel)
     if [ -x "${worktree}"/libtool ]; then
         "${worktree}"/libtool --mode=execute "$@"
+        return $?
     fi
 
     return 127
