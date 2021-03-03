@@ -3,7 +3,9 @@
 import gdb
 import gdb.printing
 
-from pretty_printers.common import CollectionPrinter, AnnotatedStructPrinter, type_to_fields_dict
+from pretty_printers.common import (
+    CollectionPrinter, AnnotatedStructPrinter, type_to_fields_dict
+)
 
 
 LDAP_MSG_TAGS = {
@@ -35,12 +37,16 @@ LDAP_MSG_TAGS = {
 class BackendPrinter(AnnotatedStructPrinter):
     """Pretty printer for LloadBackend"""
 
-    exclude = ['b_name', 'b_proto', 'b_port', 'b_host', 'b_retry_tv', 'b_counters']
+    exclude = ['b_name', 'b_proto', 'b_port', 'b_host', 'b_retry_tv',
+               'b_counters']
     exclude_false = ['b_cookie', 'b_dns_req', 'b_connecting']
 
-    def __init__(self, value, l=None):
+    def __init__(self, value, lp=None):
         super().__init__(value)
-        self.list = l or gdb.lookup_symbol('backend')[0].value()
+        if 'b_tier' in type_to_fields_dict(self.value):
+            self.list = self.value['b_tier']['t_backends']
+        else:
+            self.list = lp or gdb.lookup_symbol('backend')[0].value()
 
     def to_string(self):
         if self.value == self.list.address:
@@ -56,18 +62,22 @@ class BackendPrinter(AnnotatedStructPrinter):
         b = self.value
 
         if result['b_failed']:
-            result['b_opening'] = "{}+{} failed".format(result['b_opening'], result['b_failed'])
+            result['b_opening'] = "{}+{} failed".format(result['b_opening'],
+                                                        result['b_failed'])
         del result['b_failed']
 
-        result['pending_ops'] = "{}/{}".format(result['b_n_ops_executing'], result['b_max_pending'])
+        result['pending_ops'] = "{}/{}".format(result['b_n_ops_executing'],
+                                               result['b_max_pending'])
         del result['b_n_ops_executing']
         del result['b_max_pending']
 
-        result['conns'] = "{}/{}".format(result['b_active'], result['b_numconns'])
+        result['conns'] = "{}/{}".format(result['b_active'],
+                                         result['b_numconns'])
         del result['b_active']
         del result['b_numconns']
 
-        result['bind conns'] = "{}/{}".format(result['b_bindavail'], result['b_numbindconns'])
+        result['bind conns'] = "{}/{}".format(result['b_bindavail'],
+                                              result['b_numbindconns'])
         del result['b_bindavail']
         del result['b_numbindconns']
 
@@ -93,11 +103,13 @@ class BackendPrinter(AnnotatedStructPrinter):
             if result[name]['cqh_first'] == address:
                 result[name] = 'empty'
             else:
-                desc = gdb.default_visualizer(result[name]['cqh_first']).to_string()
+                desc = gdb.default_visualizer(result[name]['cqh_first'])\
+                    .to_string()
                 if result[name]['cqh_first'] == result[name]['cqh_last']:
                     result[name] = desc
                 else:
-                    result[name] = "{}-{}".format(desc, result[name]['cqh_last']['c_connid'])
+                    result[name] = "{}-{}".format(
+                        desc, result[name]['cqh_last']['c_connid'])
 
         for name in ['b_last_conn', 'b_last_bindconn']:
             if result[name]:
@@ -108,11 +120,14 @@ class BackendPrinter(AnnotatedStructPrinter):
 
 class ConnectionPrinter(AnnotatedStructPrinter):
     exclude = ['c_connid', 'c_destroy', 'c_unlink', 'c_txn', 'c_sb',
-            'c_starttime', 'c_activitytime', 'c_peer_name', 'c_vc_cookie',
-            'c_pdu_cb', 'c_needs_tls_accept', 'c_counters', 'c_private']
-    exclude_false = ['c_read_timeout', 'c_pin_id', 'c_currentber',
-            'c_pendingber', 'c_sasl_authctx', 'c_sasl_defaults']
-    short = ['c_read_event', 'c_write_event']
+               'c_starttime', 'c_activitytime', 'c_peer_name', 'c_vc_cookie',
+               'c_pdu_cb', 'c_needs_tls_accept', 'c_counters', 'c_private']
+    exclude_false = ['c_read_timeout', 'c_pin_id', 'c_io_state',
+                     'c_currentber', 'c_pendingber', 'c_is_tls',
+                     'c_sasl_authctx', 'c_sasl_defaults', 'c_sasl_cbinding',
+                     'c_restricted', 'c_restricted_at',
+                     'c_restricted_inflight', 'c_backend', 'c_linked']
+    short = ['c_read_event', 'c_write_event', 'c_backend', 'c_linked']
 
     def conn_type(self, value=None):
         value = value or self.value
@@ -127,8 +142,11 @@ class ConnectionPrinter(AnnotatedStructPrinter):
             parent = gdb.lookup_symbol('clients')[0].value()
         elif cb == gdb.lookup_symbol('upstream_destroy')[0].value():
             desc = "Upstream"
-            backend_type = gdb.lookup_type("LloadBackend").pointer()
-            backend = value['c_private'].cast(backend_type)
+            if 'c_backend' in type_to_fields_dict(self.value):
+                backend = value['c_backend']
+            else:
+                backend_type = gdb.lookup_type("LloadBackend").pointer()
+                backend = value['c_private'].cast(backend_type)
 
             if str(value['c_type']) == 'LLOAD_C_BIND':
                 desc = "Upstream bind"
@@ -187,9 +205,11 @@ class OperationPrinter(AnnotatedStructPrinter):
         tag = int(self.value['o_tag'])
         name = LDAP_MSG_TAGS.get(tag, "Unknown message")
 
-        client_msgid = self.value['o_client_msgid'] or self.value['o_saved_msgid']
+        client_msgid = self.value['o_client_msgid'] or \
+            self.value['o_saved_msgid']
 
-        text = "{} msgid=({}, {})".format(name, client_msgid, self.value['o_upstream_msgid'])
+        text = "{} msgid=({}, {})".format(name, client_msgid,
+                                          self.value['o_upstream_msgid'])
         if self.value['o_pin_id']:
             text += " pin={}".format(self.value['o_pin_id'])
 
@@ -204,7 +224,8 @@ class OperationPrinter(AnnotatedStructPrinter):
 
             if side+'_live' in result:
                 live = result.pop(side+'_live')
-                result[side+'_refcnt'] = "{}+{}".format(result[side+'_refcnt'], live)
+                result[side+'_refcnt'] = "{}+{}".format(result[side+'_refcnt'],
+                                                        live)
 
         if int(result['o_tag']) in LDAP_MSG_TAGS:
             result.pop('o_tag')
@@ -227,7 +248,7 @@ def register(objfile):
     printer.add_pointer_printer('LloadOperation', r'^LloadOperation$',
                                 OperationPrinter)
 
-    if objfile == None:
+    if objfile is None:
         objfile = gdb
 
     gdb.printing.register_pretty_printer(objfile, printer)

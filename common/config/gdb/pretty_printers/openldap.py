@@ -35,7 +35,8 @@ class LockPrinter:
             return "Invalid"
         if self.locked:
             if self.kind == 1:
-                return "Locked by LWP {self.owner}, depth={self.locked}".format(self=self)
+                return "Locked by LWP {self.owner}, " \
+                    "depth={self.locked}".format(self=self)
             else:
                 return "Locked by LWP {self.owner}".format(self=self)
         return "Unlocked"
@@ -92,7 +93,8 @@ class BerValuePrinter:
             if self.val:
                 return ""
             # Otherwise, we say it's a map but don't return any children
-            # If we said it's a string, gdb would escape it and put quotes around
+            # If we said it's a string, gdb would escape it and put quotes
+            # around
             return 'BVNULL'
 
 
@@ -145,7 +147,7 @@ class EntryPrinter:
 
     def children(self):
         return {
-        #    "dn": self.e['e_name'],
+            # "dn": self.e['e_name'],
         }.items()
 
 
@@ -176,7 +178,7 @@ class QueuePrinter:
     def children(self):
         return {
             "mutex": self.queue['ltp_mutex'],
-            #"cond": self.queue['ltp_cond'],
+            # "cond": self.queue['ltp_cond'],
             "work": self.queue['ltp_work_list']['stqh_first']
         }.items()
 
@@ -198,7 +200,7 @@ class PoolPrinter:
     def children(self):
         return {
             "mutex": self.pool['ltp_mutex'],
-            #"cond": self.pool['ltp_cond'],
+            # "cond": self.pool['ltp_cond'],
             "queues": self.pool['ltp_numqs'],
             "queue": self.pool['ltp_wqs'][0],
         }.items()
@@ -246,7 +248,8 @@ class DBPrinter(AnnotatedStructPrinter):
         result['type'] = self.value['bd_info']['bi_type']
         result.move_to_end('type', last=False)
 
-        result['be_next'] = gdb.default_visualizer(result['be_next']['stqe_next']).to_string()
+        result['be_next'] = gdb.default_visualizer(
+            result['be_next']['stqe_next']).to_string()
 
         flags = self.value['be_flags']
         if flags:
@@ -287,7 +290,8 @@ class OperationPrinter(AnnotatedStructPrinter):
 
     def to_string(self):
         tag = int(self.value['o_tag'])
-        return self.members.get(tag, ['Unknown request: 0x{:x}'.format(tag)])[0]
+        return self.members.get(tag,
+                                ['Unknown request: 0x{:x}'.format(tag)])[0]
 
     def children(self):
         result = self.children_dict()
@@ -304,7 +308,7 @@ class OperationPrinter(AnnotatedStructPrinter):
 
 
 def finish_printer(printer):
-    #mutex = gdb.lookup_type('pthread_mutex_t')
+    # mutex = gdb.lookup_type('pthread_mutex_t')
 
     try:
         condition_type = gdb.lookup_type('pthread_cond_t')
@@ -322,8 +326,7 @@ def register(objfile):
     print("registering OpenLDAP printers")
     printer = CollectionPrinter('OpenLDAP')
 
-    printer.add_printer('BerValue', r'^berval$',
-                        BerValuePrinter)
+    printer.add_printer('BerValue', r'^berval$', BerValuePrinter)
     printer.add_printer('mutex', r'^ldap_pvt_thread_mutex_t$',
                         LockPrinter)
     printer.add_printer('Sockaddr', r'^Sockaddr$', SockAddrPrinter)
@@ -349,7 +352,7 @@ def register(objfile):
     printer.add_pointer_printer('Operation', r'^Operation$',
                                 OperationPrinter)
 
-    if objfile == None:
+    if objfile is None:
         objfile = gdb
 
     gdb.printing.register_pretty_printer(objfile, printer)

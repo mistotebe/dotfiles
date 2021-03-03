@@ -15,6 +15,7 @@ def target_type(value):
         typ = typ.target()
     return typ
 
+
 def type_to_fields_dict(typ):
     typ = target_type(typ)
     return {field.name: field for field in typ.fields()}
@@ -29,12 +30,13 @@ class NullPrinter:
 
 
 class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
-    class RegexpPointerSubprinter(gdb.printing.RegexpCollectionPrettyPrinter.RegexpSubprinter):
+    class RegexpPointerSubprinter(gdb.printing.RegexpCollectionPrettyPrinter.
+                                  RegexpSubprinter):
         def __init__(self, name, regexp, gen_printer, pointer=False):
             super().__init__(name, regexp, gen_printer)
             self.pointer = pointer
 
-    def __call__(self, val):
+    def __call__(self, val, *args):
         typ = val.type
         pointer = False
 
@@ -52,11 +54,10 @@ class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
         for printer in self.subprinters:
             if printer.enabled and printer.pointer == pointer \
                     and printer.compiled_re.search(typename):
-                #print("Selecting printer", printer.name, "for", "pointer" if pointer else "non-pointer", "type", val.type)
                 if not val:
                     return NullPrinter(val)
                 try:
-                    return printer.gen_printer(val)
+                    return printer.gen_printer(val, *args)
                 except NotImplementedError:
                     pass
 
@@ -65,7 +66,8 @@ class CollectionPrinter(gdb.printing.RegexpCollectionPrettyPrinter):
 
     def add_printer(self, name, regexp, gen_printer, pointer=False):
         self.subprinters.append(
-                self.RegexpPointerSubprinter(name, regexp, gen_printer, pointer)
+                self.RegexpPointerSubprinter(name, regexp, gen_printer,
+                                             pointer)
         )
 
     def add_pointer_printer(self, name, regexp, gen_printer):
