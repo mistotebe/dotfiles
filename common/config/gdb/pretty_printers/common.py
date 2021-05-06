@@ -79,9 +79,11 @@ class StructPrinter:
         self.value = value
 
     def children_dict(self, fields=None):
-        pointer = self.value
-        value = pointer.dereference()
+        value = self.value
         result = OrderedDict()
+
+        if value.type.code == gdb.TYPE_CODE_PTR:
+            value = value.dereference()
 
         if fields is None:
             for field in target_type(value).fields():
@@ -91,6 +93,9 @@ class StructPrinter:
                 result[name] = value[name]
 
         return result
+
+    def children(self):
+        return self.children_dict().items()
 
 
 class AnnotatedStructPrinter(StructPrinter):
