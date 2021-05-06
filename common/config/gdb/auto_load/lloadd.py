@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import auto_load._common as helpers
 from auto_load._common import GDBArgument, SavingDecorator, ignore
 
