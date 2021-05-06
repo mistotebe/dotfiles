@@ -426,6 +426,174 @@ class DBPrinter(AnnotatedStructPrinter):
         return result.items()
 
 
+class RetryInfo(AnnotatedStructPrinter):
+    """Pretty printer for slap_retry_info_t"""
+    # exclude_false = ['ri_last']
+
+    def to_string(self):
+        index = 0
+        result = []
+        count = 0
+
+        current_index = int(self.value['ri_idx'])
+        used_up = int(self.value['ri_count'])
+
+        while count >= 0:
+            interval = int(self.value['ri_interval'][index])
+            count = int(self.value['ri_num'][index])
+
+            if count == -1:
+                component = "oo*{}s".format(interval)
+                if index == current_index:
+                    component += " right now"
+            elif not index and not used_up or index != current_index:
+                component = "{}*{}s".format(count, interval)
+            else:
+                component = "{}*{} ({} left)".format(count, interval,
+                                                     count - used_up)
+
+            index += 1
+            result.append(component)
+
+        return ";".join(result)
+
+    def children(self):
+        last = int(self.value['ri_last'])
+        if last <= 0:
+            return None
+
+        return {
+            'ri_last': last,
+        }.items()
+
+
+class SlapReplyPrinter(AnnotatedStructPrinter):
+    """Pretty printer for SlapReply"""
+    exclude_false = [
+        'sr_msgid', 'sr_matched', 'sr_text', 'sr_ref', 'sr_ctrls', 'sr_flags',
+    ]
+
+    members = {
+        0x61: ["Bind response", None],
+        0x64: ["Search entry", 'sru_search'],
+        0x73: ["Search reference", 'sru_search'],
+        0x65: ["Search result", None],
+        0x69: ["Modify response", None],
+        0x6b: ["Add response", None],
+        0x6d: ["Modify DN response", None],
+        0x6f: ["Compare response", None],
+        0x78: ["Extended response", 'sru_extended'],
+        0x79: ["Intermediate response", 'sru_extended'],
+    }
+
+    result = {
+        0x00: "SUCCESS",
+        0x01: "OPERATIONS_ERROR",
+        0x02: "PROTOCOL_ERROR",
+        0x03: "TIMELIMIT_EXCEEDED",
+        0x04: "SIZELIMIT_EXCEEDED",
+        0x05: "COMPARE_FALSE",
+        0x06: "COMPARE_TRUE",
+        0x07: "AUTH_METHOD_NOT_SUPPORTED",
+        0x08: "STRONG_AUTH_REQUIRED",
+        0x09: "PARTIAL_RESULTS",
+
+        0x0a: "REFERRAL",
+        0x0b: "ADMINLIMIT_EXCEEDED",
+        0x0c: "UNAVAILABLE_CRITICAL_EXTENSION",
+        0x0d: "CONFIDENTIALITY_REQUIRED",
+        0x0e: "SASL_BIND_IN_PROGRESS",
+
+        0x10: "NO_SUCH_ATTRIBUTE",
+        0x11: "UNDEFINED_TYPE",
+        0x12: "INAPPROPRIATE_MATCHING",
+        0x13: "CONSTRAINT_VIOLATION",
+        0x14: "TYPE_OR_VALUE_EXISTS",
+        0x15: "INVALID_SYNTAX",
+
+        0x20: "NO_SUCH_OBJECT",
+        0x21: "ALIAS_PROBLEM",
+        0x22: "INVALID_DN_SYNTAX",
+        0x23: "IS_LEAF",
+        0x24: "ALIAS_DEREF_PROBLEM",
+
+        0x2F: "X_PROXY_AUTHZ_FAILURE",
+        0x30: "INAPPROPRIATE_AUTH",
+        0x31: "INVALID_CREDENTIALS",
+        0x32: "INSUFFICIENT_ACCESS",
+
+        0x33: "BUSY",
+        0x34: "UNAVAILABLE",
+        0x35: "UNWILLING_TO_PERFORM",
+        0x36: "LOOP_DETECT",
+
+        0x40: "NAMING_VIOLATION",
+        0x41: "OBJECT_CLASS_VIOLATION",
+        0x42: "NOT_ALLOWED_ON_NONLEAF",
+        0x43: "NOT_ALLOWED_ON_RDN",
+        0x44: "ALREADY_EXISTS",
+        0x45: "NO_OBJECT_CLASS_MODS",
+        0x46: "RESULTS_TOO_LARGE",
+        0x47: "AFFECTS_MULTIPLE_DSAS",
+
+        0x4C: "VLV_ERROR",
+
+        0x50: "OTHER",
+
+        0x71: "CUP_RESOURCES_EXHAUSTED",
+        0x72: "CUP_SECURITY_VIOLATION",
+        0x73: "CUP_INVALID_DATA",
+        0x74: "CUP_UNSUPPORTED_SCHEME",
+        0x75: "CUP_RELOAD_REQUIRED",
+
+        0x76: "CANCELLED",
+        0x77: "NO_SUCH_OPERATION",
+        0x78: "TOO_LATE",
+        0x79: "CANNOT_CANCEL",
+
+        0x7A: "ASSERTION_FAILED",
+
+        0x7B: "PROXIED_AUTHORIZATION_DENIED",
+
+        0x1000: "SYNC_REFRESH_REQUIRED",
+
+        0x410e: "X_NO_OPERATION",
+
+        0x4110: "X_NO_REFERRALS_FOUND",
+        0x4111: "X_CANNOT_CHAIN",
+
+        0x4112: "X_INVALIDREFERENCE",
+
+        0x4120: "TXN_SPECIFY_OKAY",
+        0x4121: "TXN_ID_INVALID",
+    }
+
+    def __init__(self, value):
+        if int(value['sr_tag']) not in self.members:
+            raise NotImplementedError
+        super().__init__(value)
+
+    def to_string(self):
+        tag = int(self.value['sr_tag'])
+        return self.members.get(tag,
+                                ['Unknown response: 0x{:x}'.format(tag)])[0]
+
+    def children(self):
+        result = self.children_dict()
+        tag = int(result.pop('sr_tag'))
+
+        member = self.members.get(tag, ['', ''])[1]
+        if member is not None:
+            union = result['sr_un']
+            if member:
+                result['sr_un.'+member] = union[member]
+                del result['sr_un']
+        else:
+            del result['sr_un']
+
+        return result.items()
+
+
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
     exclude = ['o_next']
@@ -494,6 +662,8 @@ def register(objfile):
     printer.add_printer('Filter', r'^Filter$', FilterPrinter)
     printer.add_printer('ThreadPool', r'^ldap_pvt_thread_pool_t$',
                         PoolPrinter)
+    printer.add_printer('retry info', r'^slap_retry_info_t$',
+                        RetryInfo)
 
     # pointer printers
     printer.add_pointer_printer('AttributeDescription',
@@ -517,6 +687,8 @@ def register(objfile):
                                 DBPrinter)
     printer.add_pointer_printer('Operation', r'^Operation$',
                                 OperationPrinter)
+    printer.add_pointer_printer('SlapReply', r'^SlapReply$',
+                                SlapReplyPrinter)
 
     if objfile is None:
         objfile = gdb
