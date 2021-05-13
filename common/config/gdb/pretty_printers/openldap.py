@@ -486,6 +486,10 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
         0x79: ["Intermediate response", 'sru_extended'],
     }
 
+    types = {
+        0x03: ["Search entry", 'sru_search'],
+    }
+
     result = {
         0x00: "SUCCESS",
         0x01: "OPERATIONS_ERROR",
@@ -569,20 +573,25 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
     }
 
     def __init__(self, value):
-        if int(value['sr_tag']) not in self.members:
+        if int(value['sr_tag']) not in self.members and \
+                int(value['sr_type']) not in self.types:
             raise NotImplementedError
         super().__init__(value)
 
     def to_string(self):
+        typ = int(self.value['sr_type'])
+        if typ in self.types:
+            return self.types[typ][0]
+
         tag = int(self.value['sr_tag'])
-        return self.members.get(tag,
-                                ['Unknown response: 0x{:x}'.format(tag)])[0]
+        return self.members[tag][0]
 
     def children(self):
         result = self.children_dict()
         tag = int(result.pop('sr_tag'))
+        typ = int(self.value['sr_type'])
 
-        member = self.members.get(tag, ['', ''])[1]
+        _, member = self.members.get(tag) or self.types.get(typ)
         if member is not None:
             union = result['sr_un']
             if member:
