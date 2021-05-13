@@ -217,4 +217,4 @@ hi DiffText ctermbg=52
 let g:clang_library_path="/usr/lib/llvm-3.6/lib/"
 
 set tags=./tags,./TAGS,tags,TAGS,.tags,./.tags,./.git/tags,.git/tags
-set wildignore=*~,*.jpg,*.out,*.png,*.pdf,*.ps,*.gif,*.bmp,*.jpeg,*.tgz,*.tbz,*gz,*.bz2,*.zip,*.tif,*.xcf,*.doc,*.o,*.lo,*.pyc
+set wildignore=*~,*.jpg,*.out,*.png,*.pdf,*.ps,*.gif,*.bmp,*.jpeg,*.tgz,*.tbz,*gz,*.bz2,*.zip,*.tif,*.xcf,*.doc,*.o,*.lo,*.la,*.pyc
