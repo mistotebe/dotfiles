@@ -862,8 +862,10 @@ class OperationPrinter(AnnotatedStructPrinter):
 
     def to_string(self):
         tag = int(self.value['o_tag'])
-        return self.members.get(tag,
-                                ['Unknown request: 0x{:x}'.format(tag)])[0]
+        result = self.members.get(tag,
+                                  ['Unknown request: 0x{:x}'.format(tag)])[0]
+        result += " " + self.value['o_hdr']['oh_log_prefix'].string()
+        return result
 
     def children(self):
         result = self.children_dict()
@@ -875,6 +877,14 @@ class OperationPrinter(AnnotatedStructPrinter):
             if member:
                 result['o_request.'+member] = request[member]
         del result['o_request']
+
+        o_time = int(result['o_time'])
+        o_tusec = int(result.pop('o_tusec'))
+        o_tincr = int(result.pop('o_tincr'))
+        result['o_time'] = datetime.fromtimestamp(
+            o_time+o_tusec/1_000_000).isoformat()
+        if o_tincr:
+            result['o_time'] += f"#{o_tincr}"
 
         return result.items()
 
