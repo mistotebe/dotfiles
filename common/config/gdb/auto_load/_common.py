@@ -46,13 +46,18 @@ class FrameFilter:
             if name.find('@@') >= 0:
                 name = name[:name.find('@@')]
 
+            for prefix in self.drop_prefixes:
+                if name.startswith(prefix):
+                    name = name.removeprefix(prefix)
+                    break
+            else:
+                prefix = None
+
             decorator = self.decorators.get(name)
             if decorator:
                 frame = decorator(frame, frame_iterator)
-            else:
-                for prefix in self.drop_prefixes:
-                    if name.startswith(prefix):
-                        frame = None
-                        break
+            elif prefix is not None:
+                frame = None
+
             if frame:
                 yield frame

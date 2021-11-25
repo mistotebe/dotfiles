@@ -128,32 +128,26 @@ class AttrDescPrinter:
 
 class AttributePrinter(AnnotatedStructPrinter):
     """Pretty printer for Attribute"""
-
-    def __init__(self, value):
-        self.value = value
+    short = ['a_next']
+    exclude_false = ['a_flags', 'a_comp_data']
 
     def to_string(self):
         return self.value['a_desc']
 
     def children(self):
-        return self.value['a_desc']
-
-
-class OCPrinter:
-    """Pretty printer for ObjectClass"""
-    short = ['a_next']
-    exclude_false = ['a_flags', 'a_comp_data']
-
-    def __init__(self, oc):
-        self.oc = oc
-
-    def to_string(self):
         result = self.children_dict()
 
         if not result['a_nvals'] or result['a_vals'] == result['a_nvals']:
             result.pop('a_nvals')
 
         return result.items()
+
+
+class OCPrinter:
+    """Pretty printer for ObjectClass"""
+
+    def to_string(self):
+        return self.value['oc_name']
 
 
 class ModificationPrinter(AnnotatedStructPrinter):
