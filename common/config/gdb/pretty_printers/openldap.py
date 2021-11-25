@@ -42,6 +42,60 @@ class LockPrinter:
         return "Unlocked"
 
 
+class RWLockPrinter:
+    """Backup pretty printer for pthread_rwlock."""
+
+    def __init__(self, lock):
+        """Initialize the printer's internal data structures.
+
+        Args:
+            value: A gdb.Value representing a struct berval.
+        """
+        self.lock = lock
+        data = lock['__data']
+        self.state = data['__readers'] & 7
+        self.readers = data['__readers'] >> 3
+        self.writer = data['__cur_writer']
+
+    def display_hint(self):
+        return "map"
+
+    def children(self):
+        result = {}
+        if self.readers:
+            result['readers'] = self.readers
+        return result.items()
+
+    def to_string(self):
+        if self.state == 3:
+            return "Locked for writing by LWP {self.writer}".format(self=self)
+        elif self.state == 0 and self.readers:
+            return "Locked for reading"
+        return "Unlocked"
+
+
+class CondVarPrinter:
+    """Backup pretty printer for pthread_cond_t."""
+
+    def __init__(self, value):
+        """Initialize the printer's internal data structures.
+
+        Args:
+            value: A gdb.Value representing a struct berval.
+        """
+        self.cond = value
+        data = value['__data']
+        self.waiters = data['__wrefs'] >> 3
+
+    def display_hint(self):
+        return "map"
+
+    def to_string(self):
+        if self.waiters:
+            return "Has {} waiters".format(self.waiters)
+        return "Idle"
+
+
 class BerValuePrinter:
     """Pretty printer for BerValue."""
 
@@ -661,6 +715,10 @@ def register(objfile):
     printer.add_printer('BerValue', r'^berval$', BerValuePrinter)
     printer.add_printer('mutex', r'^ldap_pvt_thread_mutex_t$',
                         LockPrinter)
+    printer.add_printer('rwlock', r'^ldap_pvt_thread_rdwr_t$',
+                        RWLockPrinter)
+    printer.add_printer('cond', r'^ldap_pvt_thread_cond_t$',
+                        CondVarPrinter)
     printer.add_printer('Sockaddr', r'^Sockaddr$', SockAddrPrinter)
     printer.add_printer('Filter', r'^Filter$', FilterPrinter)
     printer.add_printer('ThreadPool', r'^ldap_pvt_thread_pool_t$',
@@ -669,6 +727,12 @@ def register(objfile):
                         RetryInfo)
 
     # pointer printers
+    printer.add_pointer_printer('mutex', r'^ldap_pvt_thread_mutex_t$',
+                                LockPrinter)
+    printer.add_pointer_printer('rwlock', r'^ldap_pvt_thread_rdwr_t$',
+                                RWLockPrinter)
+    printer.add_pointer_printer('cond', r'^ldap_pvt_thread_cond_t$',
+                                CondVarPrinter)
     printer.add_pointer_printer('AttributeDescription',
                                 r'^AttributeDescription$',
                                 AttrDescPrinter)
