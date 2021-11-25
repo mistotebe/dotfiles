@@ -311,8 +311,8 @@ class FilterPrinter(AnnotatedStructPrinter):
         0xa2: ['LDAP_FILTER_NOT', '!', 'f_un_complex'],
         0xa3: ['LDAP_FILTER_EQUALITY', 'AVAPrinter', 'f_un_ava'],
         0xa4: ['LDAP_FILTER_SUBSTRINGS', 'SubstringsFilter', 'f_un_ssa'],
-        0xa5: ['LDAP_FILTER_LE', 'AVAPrinter', 'f_un_ava'],
-        0xa6: ['LDAP_FILTER_GE', 'AVAPrinter', 'f_un_ava'],
+        0xa5: ['LDAP_FILTER_GE', 'AVAPrinter', 'f_un_ava'],
+        0xa6: ['LDAP_FILTER_LE', 'AVAPrinter', 'f_un_ava'],
         0x87: ['LDAP_FILTER_PRESENT', '*', 'f_un_desc'],
         0xa8: ['LDAP_FILTER_APPROX', 'AVAPrinter', 'f_un_ava'],
         0xa9: ['LDAP_FILTER_EXT', 'ExtenderFilterPrinter', 'f_un_mra'],
@@ -526,8 +526,9 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
         0x64: ["Search entry", 'sru_search'],
         0x73: ["Search reference", 'sru_search'],
         0x65: ["Search result", None],
-        0x69: ["Modify response", None],
-        0x6b: ["Add response", None],
+        0x67: ["Modify response", None],
+        0x69: ["Add response", None],
+        0x6b: ["Delete response", None],
         0x6d: ["Modify DN response", None],
         0x6f: ["Compare response", None],
         0x78: ["Extended response", 'sru_extended'],
@@ -653,13 +654,14 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
 
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
-    exclude = ['o_next']
+    exclude = ['o_hdr', 'o_next']
     exclude_false = [
         'o_abandon', 'o_cancel', 'o_groups', 'o_do_not_cache',
         'o_is_auth_check', 'o_dont_replicate', 'o_nocaching',
         'o_delete_glue_parent', 'o_no_schema_check', 'o_no_subordinate_glue',
         'o_controls', 'o_ber', 'o_res_ber', 'o_ctrls', 'o_private',
     ]
+    short = ['o_bd']
 
     members = {
         0x42: ["Unbind request", None],
