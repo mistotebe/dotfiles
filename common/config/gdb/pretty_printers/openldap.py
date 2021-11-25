@@ -3,10 +3,15 @@
 import gdb
 import gdb.printing
 
+from datetime import datetime
+import enum
 import functools
 import socket
 
-from pretty_printers.common import CollectionPrinter, AnnotatedStructPrinter
+from pretty_printers.common import (
+    CollectionPrinter, AnnotatedStructPrinter,
+    target_type,
+)
 
 
 class LockPrinter:
@@ -652,6 +657,185 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
         return result.items()
 
 
+class ConfigArgsFlags(enum.IntFlag):
+    ARG_IGNORED = 0x00080000
+    ARG_PRE_BI = 0x00100000
+    ARG_PRE_DB = 0x00200000
+    ARG_DB = 0x00400000
+    ARG_MAY_DB = 0x00800000
+    ARG_PAREN = 0x01000000
+    ARG_NONZERO = 0x02000000
+    ARG_NO_INSERT = 0x04000000
+    ARG_NO_DELETE = 0x08000000
+    ARG_UNIQUE = 0x10000000
+    ARG_QUOTE = 0x20000000
+    ARG_OFFSET = 0x40000000
+    ARG_MAGIC = 0x80000000
+
+    ARGS_USERLAND = 0x00000fff
+    ARGS_TYPES = 0x0000f000
+    ARGS_SYNTAX = 0xffff0000
+
+
+class ConfigArgTypes(enum.IntEnum):
+    ARG_INT = 0x00001000
+    ARG_LONG = 0x00002000
+    ARG_BER_LEN_T = 0x00003000
+    ARG_ON_OFF = 0x00004000
+    ARG_STRING = 0x00005000
+    ARG_BERVAL = 0x00006000
+    ARG_DN = 0x00007000
+    ARG_UINT = 0x00008000
+    ARG_ATDESC = 0x00009000
+    ARG_ULONG = 0x0000a000
+    ARG_BINARY = 0x0000b000
+
+
+class ConfigArgOps(enum.IntEnum):
+    LDAP_MOD_ADD = 0x0
+    LDAP_MOD_DELETE = 0x1
+    SLAP_CONFIG_EMIT = 0x2000
+    SLAP_CONFIG_ADD = 0x4000
+
+
+class ConfigTablePrinter(AnnotatedStructPrinter):
+    """Pretty printer for ConfigTable"""
+    exclude = ['name']
+    exclude_false = ['length', 'attribute', 'ad']
+
+    types = {
+        ConfigArgTypes.ARG_INT: 'v_int',
+        ConfigArgTypes.ARG_LONG: 'v_long',
+        ConfigArgTypes.ARG_BER_LEN_T: 'v_ber_t',
+        ConfigArgTypes.ARG_ON_OFF: 'v_int',
+        ConfigArgTypes.ARG_STRING: 'v_string',
+        ConfigArgTypes.ARG_BERVAL: 'v_bv',
+        ConfigArgTypes.ARG_UINT: 'v_uint',
+        ConfigArgTypes.ARG_ATDESC: 'v_ad',
+        ConfigArgTypes.ARG_ULONG: 'v_ulong',
+        ConfigArgTypes.ARG_BINARY: 'v_bv',
+    }
+
+    def to_string(self):
+        names = []
+
+        name = self.value['name']
+        if name and str(name):
+            names.append(name.string())
+
+        attr = self.value['ad']
+        if attr:
+            visualiser = gdb.default_visualizer(attr)
+            names.append(visualiser.to_string())
+
+        return "/".join(str(name) for name in names) or "Unknown option"
+
+    def children(self):
+        result = self.children_dict()
+
+        meta = int(result['arg_type'])
+        result['arg_type'] = hex(result['arg_type'])
+
+        arg_type = meta & ConfigArgsFlags.ARGS_TYPES
+        syntax = meta & ConfigArgsFlags.ARGS_SYNTAX
+        userland = meta & ConfigArgsFlags.ARGS_USERLAND
+
+        types = []
+        if not arg_type:
+            pass
+        elif arg_type in self.types:
+            arg_type = ConfigArgTypes(arg_type)
+            t = self.types[arg_type]
+            result['arg_default.'+t] = result['arg_default'][t]
+            del result['arg_default']
+            types.append(arg_type.name)
+        else:
+            types.append(hex(arg_type))
+
+        for flag in ConfigArgsFlags:
+            if flag in syntax:
+                types.append(flag.name)
+                syntax &= ~flag
+
+        if userland:
+            types.append(hex(userland.value))
+        result['arg_type_split'] = '|'.join(types)
+
+        return result.items()
+
+
+class ConfigArgsPrinter(AnnotatedStructPrinter):
+    """Pretty printer for ConfigArgs"""
+    exclude = ['argv_size', 'tline']
+    exclude_false = [
+        'depth', 'rvalue_vals', 'rvalue_nvals', 'type',
+        'be', 'bi', 'ca_entry', 'ca_op', 'ca_private',
+    ]
+    short = ['ca_op', 'be', 'bi', 'ca_desc']
+
+    ops = {
+        0x0: 'LDAP_MOD_ADD',
+        0x1: 'LDAP_MOD_DELETE',
+        0x2000: 'SLAP_CONFIG_EMIT',
+        0x4000: 'SLAP_CONFIG_ADD',
+    }
+
+    def __init__(self, value):
+        if 'ca_desc' not in (f.name for f in target_type(value).fields()):
+            raise NotImplementedError
+        super().__init__(value)
+
+    def to_string(self):
+        keyword = self.value['ca_desc']
+        ad = keyword['ad']
+        op = ConfigArgOps(int(self.value['op']))
+        line = self.value['line']
+        index = int(self.value['valx'])
+
+        if op == ConfigArgOps.SLAP_CONFIG_EMIT:
+            return "Emit {}".format(ad)
+
+        if op == ConfigArgOps.LDAP_MOD_DELETE:
+            string = "Delete {}".format(ad)
+            if index != -1:
+                string += ": {}".format(self.value['line'])
+            return string
+
+        if op == ConfigArgOps.SLAP_CONFIG_ADD:
+            return line.string()
+
+        if index == -1:
+            return "{}: {}".format(ad, line.string())
+
+        return "{}: {} (added to index {})".format(ad, line.string(), index)
+
+    def children(self):
+        result = self.children_dict()
+
+        op = int(self.value['op'])
+
+        if op in self.ops:
+            result['op'] = self.ops[op]
+
+        meta = int(self.value['ca_desc']['arg_type'])
+        arg_type = meta & ConfigArgsFlags.ARGS_TYPES
+        if not arg_type:
+            pass
+        elif arg_type in ConfigTablePrinter.types:
+            arg_type = ConfigArgTypes(arg_type)
+            result['arg_type'] = arg_type.name
+
+            t = ConfigTablePrinter.types[arg_type]
+            result['values.'+t] = result['values'][t]
+            del result['values']
+
+        if int(result['num_cleanups']) == 0:
+            del result['num_cleanups']
+            del result['cleanups']
+
+        return result.items()
+
+
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
     exclude = ['o_hdr', 'o_next']
@@ -751,6 +935,11 @@ def register(objfile):
                                 TaskPrinter)
     printer.add_pointer_printer('ThreadPool', r'^ldap_int_thread_poolq_s$',
                                 QueuePrinter)
+
+    printer.add_pointer_printer('ConfigTable', r'^ConfigTable$',
+                                ConfigTablePrinter)
+    printer.add_pointer_printer('ConfigArgs', r'^config_args_s$',
+                                ConfigArgsPrinter)
 
     printer.add_pointer_printer('BackendDB', r'^BackendDB$',
                                 DBPrinter)
