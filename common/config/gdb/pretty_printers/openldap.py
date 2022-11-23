@@ -898,6 +898,20 @@ class OperationPrinter(AnnotatedStructPrinter):
         return result.items()
 
 
+class RewriteRulePrinter(AnnotatedStructPrinter):
+    exclude = ['lr_regex', 'lr_flags', 'lr_mode']
+    short = ['lr_prev', 'lr_next']
+
+    def to_string(self):
+        if not self.value['lr_pattern']:
+            return "Head"
+        return " -> ".join([self.value['lr_pattern'].string(),
+                            self.value['lr_subststring'].string()])
+
+    def children(self):
+        return self.children_dict().items()
+
+
 def finish_printer(printer):
     # mutex = gdb.lookup_type('pthread_mutex_t')
 
@@ -966,6 +980,9 @@ def register(objfile):
                                 OperationPrinter)
     printer.add_pointer_printer('SlapReply', r'^SlapReply$',
                                 SlapReplyPrinter)
+
+    printer.add_pointer_printer('struct rewrite_rule', r'^rewrite_rule',
+                                RewriteRulePrinter)
 
     if objfile is None:
         objfile = gdb
