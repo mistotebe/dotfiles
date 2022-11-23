@@ -38,6 +38,9 @@
 [url "gitlab:"]
     pushInsteadOf = "git://gitlab.com/"
     pushInsteadOf = "https://gitlab.com/"
+[url "pagure:"]
+    pushInsteadOf = "git://pagure.io/"
+    pushInsteadOf = "https://pagure.io/"
 [url "git.openldap.org:"]
     insteadOf = "openldap:"
     pushInsteadOf = "https://git.openldap.org/"

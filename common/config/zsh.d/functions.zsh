@@ -4,12 +4,12 @@ cgrep () {
     grep "$@" --color=always | LESS=FRSX pager
     return $pipestatus[1]
 }
-compdef cgrep=grep
+compdef -e 'words[1]=grep; _grep' cgrep
 
 vgrep() {
-    vim -q <(grep -I -n "$@")
+    vim -q <(grep -H -I -n "$@")
 }
-compdef vgrep=grep
+compdef -e 'words[1]=grep; _grep' vgrep
 
 stealEnvironment() {
     grep -z "^$2=" "/proc/$1/environ" | cut -f2- -d=

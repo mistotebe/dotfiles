@@ -27,8 +27,9 @@ compinit
 # End of lines added by compinstall
 # Lines configured by zsh-newuser-install
 HISTFILE=~/.histfile
-HISTSIZE=1000
-SAVEHIST=1000
+HISTSIZE=5000
+SAVEHIST=5000
+setopt INC_APPEND_HISTORY
 setopt appendhistory autocd extendedglob notify
 unsetopt beep
 bindkey -e
@@ -60,6 +61,7 @@ export EDITOR=vim
 
 export PATH=~/bin:"/usr/lib/ccache:$PATH"
 export CC=clang
+export CMAKE_GENERATOR=Ninja
 
 # nowadays, compilers want to operate on the original source, otherwise macros
 # might trigger spurious warnings
@@ -87,5 +89,7 @@ if [ -n "$(whence __git_ps1)" ]; then
 fi
 
 if [ -n "$TMUX" ]; then refreshTmuxEnvironment; fi
+
+trap "~/bin/cleanup-history ~/.histfile" EXIT
 
 which fortune >/dev/null && fortune
