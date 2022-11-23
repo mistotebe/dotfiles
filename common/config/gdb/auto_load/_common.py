@@ -48,7 +48,7 @@ class FrameFilter:
 
             for prefix in self.drop_prefixes:
                 if name.startswith(prefix):
-                    name = name.removeprefix(prefix)
+                    name = name[len(prefix):]
                     break
             else:
                 prefix = None

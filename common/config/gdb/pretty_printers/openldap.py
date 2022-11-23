@@ -205,8 +205,11 @@ class AttributePrinter(AnnotatedStructPrinter):
 class OCPrinter:
     """Pretty printer for ObjectClass"""
 
+    def __init__(self, value):
+        self.value = value
+
     def to_string(self):
-        return self.value['oc_name']
+        return self.value['soc_cname']
 
 
 class ModificationPrinter(AnnotatedStructPrinter):
@@ -403,7 +406,7 @@ class PoolPrinter:
 
     def to_string(self):
         state = self.pool['ltp_pause']
-        state_string = ""
+        state_string = "unpaused"
         if state:
             state_string = "paused" if state == 2 else "pausing"
 
@@ -710,6 +713,7 @@ class ConfigTablePrinter(AnnotatedStructPrinter):
         ConfigArgTypes.ARG_ON_OFF: 'v_int',
         ConfigArgTypes.ARG_STRING: 'v_string',
         ConfigArgTypes.ARG_BERVAL: 'v_bv',
+        ConfigArgTypes.ARG_DN: 'v_dn',
         ConfigArgTypes.ARG_UINT: 'v_uint',
         ConfigArgTypes.ARG_ATDESC: 'v_ad',
         ConfigArgTypes.ARG_ULONG: 'v_ulong',
@@ -766,12 +770,12 @@ class ConfigTablePrinter(AnnotatedStructPrinter):
 
 class ConfigArgsPrinter(AnnotatedStructPrinter):
     """Pretty printer for ConfigArgs"""
-    exclude = ['argv_size', 'tline']
+    exclude = ['argv_size', 'tline', 'ca_op']
     exclude_false = [
         'depth', 'rvalue_vals', 'rvalue_nvals', 'type',
         'be', 'bi', 'ca_entry', 'ca_op', 'ca_private',
     ]
-    short = ['ca_op', 'be', 'bi', 'ca_desc']
+    short = ['be', 'bi', 'ca_desc']
 
     ops = {
         0x0: 'LDAP_MOD_ADD',
@@ -782,6 +786,8 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
 
     def __init__(self, value):
         if 'ca_desc' not in (f.name for f in target_type(value).fields()):
+            raise NotImplementedError
+        if not value['ca_desc']:
             raise NotImplementedError
         super().__init__(value)
 
@@ -802,7 +808,11 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
             return string
 
         if op == ConfigArgOps.SLAP_CONFIG_ADD:
-            return line.string()
+            if line:
+                return line.string()
+            else:
+                return " ".join(self.value['argv'][i].string()
+                                for i in range(self.value['argc']))
 
         if index == -1:
             return "{}: {}".format(ad, line.string())
@@ -812,10 +822,9 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
     def children(self):
         result = self.children_dict()
 
-        op = int(self.value['op'])
+        op = ConfigArgOps(int(self.value['op']))
 
-        if op in self.ops:
-            result['op'] = self.ops[op]
+        result['op'] = op.name
 
         meta = int(self.value['ca_desc']['arg_type'])
         arg_type = meta & ConfigArgsFlags.ARGS_TYPES
