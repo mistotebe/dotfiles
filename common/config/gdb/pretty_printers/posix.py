@@ -23,9 +23,9 @@ class TimevalPrinter:
 
     def to_string(self):
         if abs(self.tv) >= 1:
-            return "{}s".format(self.tv.normalize())
+            return "{}s".format(self.tv.to_eng_string())
         else:
-            return "{}ms".format((self.tv * 1000).normalize())
+            return "{}ms".format((self.tv * 1000).to_eng_string())
 
 
 class SockAddrPrinterGeneric:
