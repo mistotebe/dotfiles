@@ -34,7 +34,7 @@ class SockAddrPrinterGeneric:
     prefix = 'sa_'
     typename = 'struct sockaddr'
 
-    def __init_subclass__(cls, /, **kwargs):
+    def __init_subclass__(cls, **kwargs):
         family = getattr(cls, 'family', None)
         if family:
             __class__.__family_to_subclass__[family] = cls
