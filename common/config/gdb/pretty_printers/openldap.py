@@ -291,18 +291,25 @@ class AVAPrinter(AnnotatedStructPrinter):
         self.string_like = choice in self.operator \
             and value_printer.string_like
 
+    def display_hint(self):
+        return "array"
+
     def to_string(self):
         # Only pretty-print if we can have a nice string
         if not self.string_like:
             return None
 
-        return "{}{}{}".format(self.value['aa_desc'],
+        desc = self.value['aa_desc']
+        visualiser = gdb.default_visualizer(desc)
+        return "{}{}{}".format(visualiser.to_string(),
                                self.operator[self.choice],
                                self.value['aa_value'])
 
     def children(self):
         if self.string_like:
             return None
+            return [(str(self.value['aa_desc']) + self.operator[self.choice],
+                     self.value['aa_value'])]
         return self.children_dict().items()
 
 
@@ -354,58 +361,58 @@ class FilterPrinter(AnnotatedStructPrinter):
 class EntryPrinter:
     """Pretty printer for Entry"""
 
-    def __init__(self, e):
-        self.e = e
+    def __init__(self, value):
+        self.value = value
 
     def to_string(self):
-        return self.e['e_name']
+        return self.value['e_name']
 
     def children(self):
         return {
-            # "dn": self.e['e_name'],
+            # "dn": self.value['e_name'],
         }.items()
 
 
 class TaskPrinter:
     """Pretty printer for ldap_int_thread_task_s"""
 
-    def __init__(self, work):
-        self.work = work
+    def __init__(self, value):
+        self.value = value
 
     def to_string(self):
-        return self.work['ltt_start_routine']
+        return self.value['ltt_start_routine']
 
     def children(self):
         return {
-            "arg": self.work['ltt_arg'],
+            "arg": self.value['ltt_arg'],
         }.items()
 
 
 class QueuePrinter:
     """Pretty printer for ldap_int_thread_poolq_s"""
 
-    def __init__(self, queue):
-        self.queue = queue
+    def __init__(self, value):
+        self.value = value
 
     def to_string(self):
         return None
 
     def children(self):
         return {
-            "mutex": self.queue['ltp_mutex'],
+            "mutex": self.value['ltp_mutex'],
             # "cond": self.queue['ltp_cond'],
-            "work": self.queue['ltp_work_list']['stqh_first']
+            "work": self.value['ltp_work_list']['stqh_first']
         }.items()
 
 
 class PoolPrinter:
     """Pretty printer for ldap_pvt_thread_pool_t"""
 
-    def __init__(self, pool):
-        self.pool = pool
+    def __init__(self, value):
+        self.value = value
 
     def to_string(self):
-        state = self.pool['ltp_pause']
+        state = self.value['ltp_pause']
         state_string = "unpaused"
         if state:
             state_string = "paused" if state == 2 else "pausing"
@@ -414,10 +421,10 @@ class PoolPrinter:
 
     def children(self):
         return {
-            "mutex": self.pool['ltp_mutex'],
-            # "cond": self.pool['ltp_cond'],
-            "queues": self.pool['ltp_numqs'],
-            "queue": self.pool['ltp_wqs'][0],
+            "mutex": self.value['ltp_mutex'],
+            # "cond": self.value['ltp_cond'],
+            "queues": self.value['ltp_numqs'],
+            "queue": self.value['ltp_wqs'][0],
         }.items()
 
 
@@ -454,6 +461,8 @@ class DBPrinter(AnnotatedStructPrinter):
     def to_string(self):
         if not self.value['bd_self']:
             return "fake DB"
+        if not self.value['be_suffix'] or not self.value['bd_info']:
+            return "corrupt?"
         return self.value['be_suffix'][0]
 
     def children(self):
@@ -499,7 +508,7 @@ class RetryInfo(AnnotatedStructPrinter):
             count = int(self.value['ri_num'][index])
 
             if count == -1:
-                component = "oo*{}s".format(interval)
+                component = "{}s".format(interval)
                 if index == current_index:
                     component += " right now"
             elif not index and not used_up or index != current_index:
@@ -847,12 +856,12 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
 
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
-    exclude = ['o_hdr', 'o_next']
+    exclude = ['o_hdr', 'o_ber', 'o_next']
     exclude_false = [
         'o_abandon', 'o_cancel', 'o_groups', 'o_do_not_cache',
         'o_is_auth_check', 'o_dont_replicate', 'o_nocaching',
         'o_delete_glue_parent', 'o_no_schema_check', 'o_no_subordinate_glue',
-        'o_controls', 'o_ber', 'o_res_ber', 'o_ctrls', 'o_private',
+        'o_controls', 'o_res_ber', 'o_ctrls', 'o_private',
     ]
     short = ['o_bd']
 
@@ -874,6 +883,10 @@ class OperationPrinter(AnnotatedStructPrinter):
         result = self.members.get(tag,
                                   ['Unknown request: 0x{:x}'.format(tag)])[0]
         result += " " + self.value['o_hdr']['oh_log_prefix'].string()
+
+        if int(self.value['o_abandon']):
+            result += " (abandoned)"
+
         return result
 
     def children(self):
@@ -894,6 +907,9 @@ class OperationPrinter(AnnotatedStructPrinter):
             o_time+o_tusec/1_000_000).isoformat()
         if o_tincr:
             result['o_time'] += f"#{o_tincr}"
+
+        if int(result['o_req_dn']['bv_len']):
+            result.pop('o_req_ndn')
 
         return result.items()
 
