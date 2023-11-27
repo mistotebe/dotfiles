@@ -52,6 +52,11 @@ bindkey '^[[1;2B' history-beginning-search-forward
 bindkey '^[[H' beginning-of-line
 bindkey '^[[F' end-of-line
 
+# A companion to insert-last-word (M-.)
+autoload copy-earlier-word
+zle -N copy-earlier-word
+bindkey '^[,' copy-earlier-word
+
 autoload -U select-word-style
 select-word-style shell
 
@@ -59,7 +64,7 @@ export PS1="%n@%m:%~%# "
 
 export EDITOR=vim
 
-export PATH=~/bin:"/usr/lib/ccache:$PATH"
+export PATH=~/bin:~/.local/bin:"/usr/lib/ccache:$PATH"
 export CC=clang
 export CMAKE_GENERATOR=Ninja
 
