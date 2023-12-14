@@ -474,8 +474,10 @@ class DBPrinter(AnnotatedStructPrinter):
         result['type'] = self.value['bd_info']['bi_type']
         result.move_to_end('type', last=False)
 
-        result['be_next'] = gdb.default_visualizer(
-            result['be_next']['stqe_next']).to_string()
+        # TODO: use format_string(summary=True)?
+        #result['be_next'] = gdb.default_visualizer(
+        #    result['be_next']['stqe_next']).to_string()
+        result['be_next'] = result['be_next']['stqe_next'].format_string(summary=True)
 
         flags = self.value['be_flags']
         if flags:
@@ -554,6 +556,7 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
 
     types = {
         0x03: ["Search entry", 'sru_search'],
+        0x04: ["Search reference", 'sru_search'],
     }
 
     result = {
@@ -738,6 +741,7 @@ class ConfigTablePrinter(AnnotatedStructPrinter):
 
         attr = self.value['ad']
         if attr:
+            # TODO: use format_string()?
             visualiser = gdb.default_visualizer(attr)
             names.append(visualiser.to_string())
 
@@ -798,6 +802,10 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
             raise NotImplementedError
         if not value['ca_desc']:
             raise NotImplementedError
+        try:
+            ConfigArgOps(int(value['op']))
+        except ValueError:
+            raise NotImplementedError
         super().__init__(value)
 
     def to_string(self):
@@ -854,6 +862,72 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
         return result.items()
 
 
+class BindConfPrinter(AnnotatedStructPrinter):
+    """Pretty printer for slap_bindconf"""
+    exclude_false = [
+        'sb_version', 'sb_timeout_api', 'sb_timeout_net', 'sb_tcp_user_timeout',
+        'sb_secprops',
+        'sb_tls_ctx', 'sb_tls_cert', 'sb_tls_key', 'sb_tls_cacert',
+        'sb_tls_cacertdir', 'sb_tls_reqcert', 'sb_tls_reqsan',
+        'sb_tls_cipher_suite', 'sb_tls_protocol_min', 'sb_tls_ecname',
+        'sb_tls_crlcheck', 'sb_tls_int_reqcert', 'sb_tls_int_reqsan',
+        'sb_tls_do_init',
+    ]
+    exclude_empty = ['sb_uri', 'sb_realm', 'sb_authcId', 'sb_authzId']
+
+    SB_TLS_DEFAULT = -1
+
+    BINDMECH_SIMPLE = 0x80
+    BINDMECH_SASL = 0xa3
+
+    def children(self):
+        result = self.children_dict()
+
+        if int(result['sb_tls']) == self.SB_TLS_DEFAULT:
+            result.pop('sb_tls')
+
+        if result['sb_method'] != self.BINDMECH_SASL:
+            for item in ('sb_saslmech', 'sb_secprops', 'sb_realm',
+                         'sb_authcId', 'sb_authzId'):
+                result.pop(item, None)
+
+        for item in self.exclude_empty:
+            if item in result and not self.value[item]['bv_val']:
+                result.pop(item)
+
+        return result.items()
+
+
+class AuthorizationInformation(AnnotatedStructPrinter):
+    """Pretty printer for AuthorizationInformation"""
+    exclude = ['sai_ndn']
+    exclude_false = [
+        'sai_ssf', 'sai_transport_ssf', 'sai_tls_ssf', 'sai_sasl_ssf',
+    ]
+
+    BINDMECH_SIMPLE = 0x80
+    BINDMECH_SASL = 0xa3
+
+    def children(self):
+        result = self.children_dict()
+
+        if int(result.pop('sb_method')) != self.BINDMECH_SASL:
+            result.pop('sai_mech')
+
+        return result.items()
+
+
+class KeepalivePrinter:
+    """Pretty printer for ldap_int_thread_task_s"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def to_string(self):
+        return ":".join(str(self.value[key]) for key in
+                        ('sk_idle', 'sk_probes', 'sk_interval'))
+
+
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
     exclude = ['o_hdr', 'o_ber', 'o_next']
@@ -877,6 +951,11 @@ class OperationPrinter(AnnotatedStructPrinter):
         0x6e: ["Compare request", 'oq_compare'],
         0x77: ["Extended request", 'oq_extended'],
     }
+
+    def __init__(self, value):
+        if not value['o_hdr']:
+            raise NotImplementedError
+        super().__init__(value)
 
     def to_string(self):
         tag = int(self.value['o_tag'])
@@ -938,7 +1017,7 @@ def finish_printer(printer):
         visualiser = gdb.default_visualizer(condition)
         if visualiser:
             printer.add_printer('condition', r'^ldap_pvt_thread_cond_t$',
-                                gdb.default_visualizer(condition))
+                                visualiser)
     except gdb.error:
         pass
 
@@ -960,6 +1039,11 @@ def register(objfile):
                         PoolPrinter)
     printer.add_printer('retry info', r'^slap_retry_info_t$',
                         RetryInfo)
+    printer.add_printer('slap_keepalive', r'^slap_keepalive$',
+                        KeepalivePrinter)
+    printer.add_printer('slap_bindconf', r'^slap_bindconf$',
+                        BindConfPrinter)
+
 
     # pointer printers
     printer.add_pointer_printer('mutex', r'^ldap_pvt_thread_mutex_t$',
@@ -989,6 +1073,9 @@ def register(objfile):
                                 ConfigTablePrinter)
     printer.add_pointer_printer('ConfigArgs', r'^config_args_s$',
                                 ConfigArgsPrinter)
+
+    printer.add_pointer_printer('slap_bindconf', r'^slap_bindconf$',
+                                BindConfPrinter)
 
     printer.add_pointer_printer('BackendDB', r'^BackendDB$',
                                 DBPrinter)

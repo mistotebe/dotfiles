@@ -33,13 +33,59 @@ LDAP_MSG_TAGS = {
     0x79: "Intermediate response",
 }
 
+class TierPrinter(AnnotatedStructPrinter):
+    """Pretty printer for LloadTier"""
+
+    exclude = ['t_name', 't_monitor']
+    exclude_false = ['t_backends', 't_flags', 't_private']
+
+    def __init__(self, value, lp=None):
+        super().__init__(value)
+        self.list = lp or gdb.lookup_symbol('tiers')[0].value()
+
+    def to_string(self):
+        if self.value == self.list.address:
+            return "end of list"
+
+        return self.value['t_name'] or self.value['t_type']['tier_name']
+
+    def children(self):
+        if self.value == self.list.address:
+            return []
+
+        result = self.children_dict()
+        t = self.value
+
+        result['t_type'] = result['t_type']['tier_name']
+
+        # TODO: convert to proper Queue printers
+        address = result['t_backends'].address
+        if result['t_backends']['cqh_first'] == address:
+            result['t_backends'] = 'empty'
+        else:
+            desc = gdb.default_visualizer(result['t_backends']['cqh_first'])\
+                .to_string()
+            if result['t_backends']['cqh_first'] == \
+                    result['t_backends']['cqh_last']:
+                result['t_backends'] = desc
+
+        next = result['t_next']['stqe_next']
+        visualiser = gdb.default_visualizer(next)
+        result['next'] = visualiser.to_string()
+
+        del result['t_next']
+
+        return result.items()
 
 class BackendPrinter(AnnotatedStructPrinter):
     """Pretty printer for LloadBackend"""
 
     exclude = ['b_name', 'b_proto', 'b_port', 'b_host', 'b_retry_tv',
-               'b_counters']
-    exclude_false = ['b_cookie', 'b_dns_req', 'b_connecting']
+               'b_counters', 'b_monitor']
+    exclude_false = ['b_cookie', 'b_dns_req', 'b_connecting',
+                     'b_fitness', 'b_weight']
+
+    short = ['b_tier']
 
     def __init__(self, value, lp=None):
         super().__init__(value)
@@ -86,13 +132,13 @@ class BackendPrinter(AnnotatedStructPrinter):
         prev = result['b_next']['cqe_prev']
         if prev == self.list.address:
             result['prev'] = "end of list"
-        else:
+        elif prev:
             result['prev'] = prev['b_name']
 
         next = b['b_next']['cqe_next']
         if next == self.list.address:
             result['next'] = "end of list"
-        else:
+        elif next:
             result['next'] = next['b_name']
 
         del result['b_next']
@@ -243,6 +289,8 @@ def register(objfile):
     # pointer printers
     printer.add_pointer_printer('LloadBackend', r'^LloadBackend$',
                                 BackendPrinter)
+    printer.add_pointer_printer('LloadTier', r'^LloadTier$',
+                                TierPrinter)
     printer.add_pointer_printer('LloadConnection', r'^LloadConnection$',
                                 ConnectionPrinter)
     printer.add_pointer_printer('LloadOperation', r'^LloadOperation$',
