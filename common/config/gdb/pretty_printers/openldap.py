@@ -307,7 +307,7 @@ class AVAPrinter(AnnotatedStructPrinter):
 
     def children(self):
         if self.string_like:
-            return None
+            return []
             return [(str(self.value['aa_desc']) + self.operator[self.choice],
                      self.value['aa_value'])]
         return self.children_dict().items()
@@ -815,26 +815,31 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
         line = self.value['line']
         index = int(self.value['valx'])
 
+        prefix = ""
+        if int(self.value['reply']['err']):
+            prefix += "Failed "
+
         if op == ConfigArgOps.SLAP_CONFIG_EMIT:
-            return "Emit {}".format(ad)
+            return "{}Emit {}".format(prefix, ad)
 
         if op == ConfigArgOps.LDAP_MOD_DELETE:
-            string = "Delete {}".format(ad)
+            string = "{}Delete {}".format(prefix, ad)
             if index != -1:
                 string += ": {}".format(self.value['line'])
             return string
 
         if op == ConfigArgOps.SLAP_CONFIG_ADD:
             if line:
-                return line.string()
+                return prefix + line.string()
             else:
-                return " ".join(self.value['argv'][i].string()
-                                for i in range(self.value['argc']))
+                return prefix + " ".join(self.value['argv'][i].string()
+                                         for i in range(self.value['argc']))
 
         if index == -1:
-            return "{}: {}".format(ad, line.string())
+            return "{}{}: {}".format(prefix, ad, line.string())
 
-        return "{}: {} (added to index {})".format(ad, line.string(), index)
+        return "{}{}: {} (added to index {})".format(
+                prefix, ad, line.string(), index)
 
     def children(self):
         result = self.children_dict()
