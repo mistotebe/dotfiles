@@ -1,4 +1,5 @@
-set from="Ondřej Kuzník <ondra@mistotebe.net>"
+set from="ondra@mistotebe.net"
+set realname="Ondřej Kuzník"
 set pgp_use_gpg_agent
 
 set folder="~/.maildir"
@@ -52,10 +53,10 @@ folder-hook . "exec collapse-all"
 set sidebar_width=30
 set sidebar_visible=yes
 set sidebar_divider_char='┃'
-#set sidebar_sort_method=new
+set sidebar_sort_method=alpha
 
 set mail_check_stats=yes
-set sidebar_format="%B%*  %S%?N?(%N)?%?F?[%F]?"
+set sidebar_format="%B%* %?F?%F:?%?N?%N/?%S"
 set sidebar_indent_string=" "
 set sidebar_folder_indent=yes
 set sidebar_short_path=yes
@@ -64,6 +65,8 @@ set sidebar_short_path=yes
 # color of folders with new mail
 #
 color sidebar_new  red default
+color sidebar_flagged bold default default
+
 
 #
 # ctrl-n, ctrl-p to navigate to the next/previous mailbox with unread mail.
