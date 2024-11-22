@@ -21,7 +21,11 @@ if not path:
     raise SystemExit("Not in a git repo")
 
 repo = pygit2.repository.Repository(path)
-onto = repo.revparse_single(options.target).oid
+try:
+    onto = repo.revparse_single(options.target).oid
+except KeyError:
+    raise SystemExit(f"Name {options.target!r} doesn't correspond to a valid "
+                      "commit")
 
 if not options.branch:
     if repo.head_is_detached:
