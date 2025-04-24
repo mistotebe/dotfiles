@@ -196,8 +196,20 @@ class AttributePrinter(AnnotatedStructPrinter):
     def children(self):
         result = self.children_dict()
 
-        if not result['a_nvals'] or result['a_vals'] == result['a_nvals']:
+        vals = result['a_vals']
+        nvals = result['a_nvals']
+        if not nvals or vals == nvals:
             result.pop('a_nvals')
+            nvals = None
+
+        numvals = int(result['a_numvals'])
+        if numvals:
+            valuestype = vals.type.target().target()
+            arraytype = valuestype.array(numvals-1)
+            result['a_vals'] = vals.dereference().cast(arraytype)
+            if nvals:
+                result['a_nvals'] = nvals.dereference().cast(arraytype)
+            result.pop('a_numvals')
 
         return result.items()
 
@@ -1064,6 +1076,8 @@ def register(objfile):
                                 OCPrinter)
     printer.add_pointer_printer('Entry', r'^Entry$',
                                 EntryPrinter)
+    printer.add_pointer_printer('Attribute', r'^Attribute$',
+                                AttributePrinter)
     printer.add_pointer_printer('AttributeAssertion', r'^AttributeAssertion$',
                                 AVAPrinter)
     printer.add_pointer_printer('Filter', r'^Filter$',
