@@ -21,7 +21,10 @@ class AssertDecorator(SavingDecorator):
 
 
 class LibCFrameFilter(helpers.FrameFilter):
-    drop_prefixes = [ '__GI_', '__lll_', '_IO_', '__futex_' ]
+    drop_prefixes = [
+        '__GI_', '__lll_', '_IO_', '__futex_',
+        '__internal_', '__pthread_', '___pthread_', '__syscall_',
+    ]
     decorators = {
         '__assert_fail': AssertDecorator,
         '__assert_fail_base': ignore,
