@@ -790,6 +790,9 @@ class ConfigTablePrinter(AnnotatedStructPrinter):
             types.append(hex(userland.value))
         result['arg_type_split'] = '|'.join(types)
 
+        if 'ad' in result:
+            result.pop('attribute', None)
+
         return result.items()
 
 
@@ -801,13 +804,6 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
         'be', 'bi', 'ca_entry', 'ca_op', 'ca_private',
     ]
     short = ['be', 'bi', 'ca_desc']
-
-    ops = {
-        0x0: 'LDAP_MOD_ADD',
-        0x1: 'LDAP_MOD_DELETE',
-        0x2000: 'SLAP_CONFIG_EMIT',
-        0x4000: 'SLAP_CONFIG_ADD',
-    }
 
     def __init__(self, value):
         if 'ca_desc' not in (f.name for f in target_type(value).fields()):
@@ -855,6 +851,12 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
 
     def children(self):
         result = self.children_dict()
+
+        argv = result['argv']
+        argc = result.pop('argc')
+        argvtype = argv.type.target()
+        arraytype = argvtype.array(argc)
+        result['argv'] = argv.dereference().cast(arraytype)
 
         op = ConfigArgOps(int(self.value['op']))
 
