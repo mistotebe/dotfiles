@@ -740,7 +740,7 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
         return result.items()
 
 
-class ConfigArgsFlags(enum.IntFlag):
+class ConfigArgsFlags(FlagsPrinter):
     ARG_IGNORED = 0x00080000
     ARG_PRE_BI = 0x00100000
     ARG_PRE_DB = 0x00200000
@@ -837,10 +837,7 @@ class ConfigTablePrinter(AnnotatedStructPrinter):
         else:
             types.append(hex(arg_type))
 
-        for flag in ConfigArgsFlags:
-            if flag in syntax:
-                types.append(flag.name)
-                syntax &= ~flag
+        types.append(ConfigArgsFlags.to_string(syntax))
 
         if userland:
             types.append(hex(userland.value))
