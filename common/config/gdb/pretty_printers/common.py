@@ -133,10 +133,10 @@ class FlagsPrinter(IntFlag):
             import sys
             if sys.version_info < (3,12):
                 if value in cls._value2member_map_:
-                    return cls(value).removeprefix(prefix)
+                    return cls(value).name.removeprefix(prefix)
             else:
                 if value in cls:
-                    return cls(value).removeprefix(prefix)
+                    return cls(value).name.removeprefix(prefix)
 
         for mask in cls:
             if mask and (value & mask) == mask:
