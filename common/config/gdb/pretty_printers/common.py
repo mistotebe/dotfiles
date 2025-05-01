@@ -127,9 +127,16 @@ class FlagsPrinter(IntFlag):
         result = []
         value = int(value)
 
-        if not value and value in cls:
-            # A mask of 0x0 is a fallback only
-            return cls(value).name
+        # A mask of 0x0 is a fallback only
+        # FIXME: hack to support python 3.6+
+        if not value:
+            import sys
+            if sys.version_info < (3,12):
+                if value in cls._value2member_map_:
+                    return cls(value).removeprefix(prefix)
+            else:
+                if value in cls:
+                    return cls(value).removeprefix(prefix)
 
         for mask in cls:
             if mask and (value & mask) == mask:
