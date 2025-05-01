@@ -5,6 +5,7 @@ import gdb.printing
 import gdb.types
 
 from collections import OrderedDict
+from enum import IntFlag
 
 
 def target_type(value):
@@ -117,3 +118,24 @@ class AnnotatedStructPrinter(StructPrinter):
                     result[name] = visualiser.to_string()
 
         return result
+
+class FlagsPrinter(IntFlag):
+    # TODO: allow setting up with prefix(es?) to remove from the returned names
+
+    @classmethod
+    def to_string(cls, value, prefix=''):
+        result = []
+        value = int(value)
+
+        if not value and value in cls:
+            # A mask of 0x0 is a fallback only
+            return cls(value).name
+
+        for mask in cls:
+            if mask and (value & mask) == mask:
+                value &= ~mask.value
+                result.append(mask.name)
+        if value:
+            result.append(hex(value))
+
+        return '|'.join([name.removeprefix(prefix) for name in result])

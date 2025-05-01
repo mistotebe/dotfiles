@@ -9,7 +9,7 @@ import functools
 import socket
 
 from pretty_printers.common import (
-    CollectionPrinter, AnnotatedStructPrinter,
+    CollectionPrinter, AnnotatedStructPrinter, FlagsPrinter,
     target_type,
 )
 
@@ -546,6 +546,36 @@ class RetryInfo(AnnotatedStructPrinter):
         }.items()
 
 
+class ResponseAttrFlags(FlagsPrinter):
+    SLAP_ATTRS_UNDEFINED = 0x0
+    SLAP_OPATTRS_NO = 0x1
+    SLAP_OPATTRS_YES = 0x2
+    SLAP_USERATTRS_NO = 0x10
+    SLAP_USERATTRS_YES = 0x20
+
+
+class ResultEntryPrinter(AnnotatedStructPrinter):
+    """Pretty printer for rep_search_s"""
+    exclude_false = [
+        'r_operational_attrs', 'r_attrs', 'r_v2ref'
+    ]
+
+    def __init__(self, value):
+        if not value['r_entry']:
+            raise NotImplementedError
+        super().__init__(value)
+
+    def children(self):
+        result = self.children_dict()
+
+        result['r_attr_flags'] = ResponseAttrFlags.to_string(
+                result['r_attr_flags'])
+
+        # TODO: turn r_attrs into an array
+
+        return result.items()
+
+
 class SlapReplyPrinter(AnnotatedStructPrinter):
     """Pretty printer for SlapReply"""
     exclude_false = [
@@ -567,8 +597,13 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
     }
 
     types = {
-        0x03: ["Search entry", 'sru_search'],
-        0x04: ["Search reference", 'sru_search'],
+        'REP_SEARCH': ["Search entry", 'sru_search'],
+        'REP_SEARCHREF': ["Search reference", 'sru_search'],
+        # TODO:
+        # 'REP_EXTENDED'
+        # 'REP_SASL'
+        # 'REP_INTERMEDIATE'
+        # 'REP_GLUE_RESULT'
     }
 
     result = {
@@ -654,25 +689,46 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
     }
 
     def __init__(self, value):
-        if int(value['sr_tag']) not in self.members and \
-                int(value['sr_type']) not in self.types:
+        if not self._result_type(value):
             raise NotImplementedError
         super().__init__(value)
 
     def to_string(self):
-        typ = int(self.value['sr_type'])
-        if typ in self.types:
-            return self.types[typ][0]
+        result, member = self._result_type()
 
-        tag = int(self.value['sr_tag'])
-        return self.members[tag][0]
+        if member == "sru_search":
+            entry = self.value['sr_un']['sru_search']['r_entry']
+            visualiser = gdb.default_visualizer(entry)
+            dn = visualiser.to_string()
+            return f"{result} {dn}"
+
+        return result
+
+    def _result_type(self, value=None):
+        if value is None:
+            value = self.value
+
+        typ = str(value['sr_type'])
+        tag = int(value['sr_tag'])
+
+        if typ == 'REP_RESULT' and not tag \
+                and value['sr_un']['sru_search']['r_entry']:
+            # A lot of code doesn't care to set up sr_type when calling
+            # send_search_entry() which is acknowledged in there too
+            typ = 'REP_SEARCH'
+
+        if typ in self.types:
+            return self.types[typ]
+
+        if tag in self.members:
+            return self.members[tag]
+
+        return None
 
     def children(self):
         result = self.children_dict()
-        tag = int(result.pop('sr_tag'))
-        typ = int(self.value['sr_type'])
+        _, member = self._result_type()
 
-        _, member = self.members.get(tag) or self.types.get(typ)
         if member is not None:
             union = result['sr_un']
             if member:
@@ -1058,6 +1114,8 @@ def register(objfile):
                         PoolPrinter)
     printer.add_printer('retry info', r'^slap_retry_info_t$',
                         RetryInfo)
+    printer.add_printer('rep_search_s', r'^rep_search_s$',
+                        ResultEntryPrinter)
     printer.add_printer('slap_keepalive', r'^slap_keepalive$',
                         KeepalivePrinter)
     printer.add_printer('slap_bindconf', r'^slap_bindconf$',
