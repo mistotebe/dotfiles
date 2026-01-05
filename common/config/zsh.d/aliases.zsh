@@ -15,7 +15,7 @@ alias la='ls -A'
 alias l='ls -CF'
 
 alias go='xdg-open'
-alias cal='cal -m'
+alias mplayer='mpv'
 alias follow='tail -n0 -F'
 alias diff='diff -u'
 alias ems='emacsclient -a "" -nw'

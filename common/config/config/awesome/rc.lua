@@ -429,11 +429,15 @@ globalkeys = gears.table.join(
                                           end),
     awful.key({ modkey            }, "s",
                                           function ()
-                                              awful.util.spawn("gnome-screenshot")
+                                              awful.util.spawn("gnome-screenshot -i")
                                           end),
     awful.key({                   }, "Print",
                                           function ()
                                               awful.util.spawn("gnome-screenshot -w")
+                                          end),
+    awful.key({ modkey            }, "Print",
+                                          function ()
+                                              awful.util.spawn("flameshot")
                                           end),
 -- Conflicts with tiling keys
 --    awful.key({ modkey            }, "l",
@@ -453,6 +457,11 @@ globalkeys = gears.table.join(
     awful.key({ "Control"         }, "XF86Display",
                                           function ()
                                               awful.util.spawn("xrandr --output LVDS1 --auto --output HDMI2 --auto --primary --left-of LVDS1")
+                                          end),
+
+    awful.key({ modkey            }, "Pause",
+                                          function ()
+                                              awful.util.spawn("find-cursor -c '#006600'")
                                           end)
 )
 
@@ -758,6 +767,7 @@ screen.connect_signal("list", function()
     for _, c in pairs(client.get()) do
         if c.saved_location and c.saved_location[hash] then
             local s, t = location_by_name(table.unpack(c.saved_location[hash]))
+            c:move_to_screen(s)
             c:move_to_tag(t)
         end
     end

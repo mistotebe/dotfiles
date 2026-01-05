@@ -13,4 +13,5 @@ handle SIGPIPE noprint
 
 #set scheduler-locking step
 
+#set python print-stack full
 source ~/.gdb/gdb.py

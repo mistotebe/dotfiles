@@ -42,6 +42,8 @@ alternative_order text/plain text/enriched text/html
 mime_lookup application/octet-stream
 #set mime_forward=yes
 
+unignore X-CRM114-Status
+
 set pager_index_lines=10
 folder-hook . "exec collapse-all"
 
@@ -107,11 +109,12 @@ bind index B bounce-message
 bind pager <Space> half-down
 bind pager <BackSpace> half-up
 
-macro index X '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --spam'
-macro index H '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --good'
-macro pager X '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --spam'
-macro pager H '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --good'
+macro index X '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --spam >/dev/null'
+macro index H '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --good >/dev/null'
+macro pager X '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --spam >/dev/null'
+macro pager H '| formail -I X-CRM114-Status -I X-CRM114-Action -I X-CRM114-Version | /usr/share/crm114/mailreaver.crm -u /home/ondra/.crm114/ --good >/dev/null'
 
+set reverse_name
 alternates '@mistotebe\.net$' '^mistotebe@gmail\.com$' '^cargill@atlas\.cz$' '^ondrej\.kuznik@atlas\.cz$' '^ondrej\.kuznik@credativ\.co\.uk$' '^okuznik@symas.com$'
 
 #mailboxes ! `find ~/.mail -type f -printf '%p '`
