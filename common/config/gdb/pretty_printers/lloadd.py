@@ -6,6 +6,7 @@ import gdb.printing
 from pretty_printers.common import (
     CollectionPrinter, AnnotatedStructPrinter, type_to_fields_dict
 )
+from typing import ClassVar
 
 
 LDAP_MSG_TAGS = {
@@ -33,11 +34,12 @@ LDAP_MSG_TAGS = {
     0x79: "Intermediate response",
 }
 
+
 class TierPrinter(AnnotatedStructPrinter):
     """Pretty printer for LloadTier"""
 
-    exclude = ['t_name', 't_monitor']
-    exclude_false = ['t_backends', 't_flags', 't_private']
+    exclude: ClassVar = ['t_name', 't_monitor']
+    exclude_false: ClassVar = ['t_backends', 't_flags', 't_private']
 
     def __init__(self, value, lp=None):
         super().__init__(value)
@@ -54,7 +56,6 @@ class TierPrinter(AnnotatedStructPrinter):
             return []
 
         result = self.children_dict()
-        t = self.value
 
         result['t_type'] = result['t_type']['tier_name']
 
@@ -77,15 +78,24 @@ class TierPrinter(AnnotatedStructPrinter):
 
         return result.items()
 
+
 class BackendPrinter(AnnotatedStructPrinter):
     """Pretty printer for LloadBackend"""
 
-    exclude = ['b_name', 'b_proto', 'b_port', 'b_host', 'b_retry_tv',
-               'b_counters', 'b_monitor']
-    exclude_false = ['b_cookie', 'b_dns_req', 'b_connecting',
-                     'b_fitness', 'b_weight']
+    exclude: ClassVar = [
+        "b_name",
+        "b_proto",
+        "b_port",
+        "b_host",
+        "b_retry_tv",
+        "b_counters",
+        "b_monitor",
+    ]
+    exclude_false: ClassVar = [
+        "b_cookie", "b_dns_req", "b_connecting", "b_fitness", "b_weight",
+    ]
 
-    short = ['b_tier']
+    short: ClassVar = ["b_tier"]
 
     def __init__(self, value, lp=None):
         super().__init__(value)
@@ -165,15 +175,40 @@ class BackendPrinter(AnnotatedStructPrinter):
 
 
 class ConnectionPrinter(AnnotatedStructPrinter):
-    exclude = ['c_connid', 'c_destroy', 'c_unlink', 'c_txn', 'c_sb',
-               'c_starttime', 'c_activitytime', 'c_peer_name', 'c_vc_cookie',
-               'c_pdu_cb', 'c_needs_tls_accept', 'c_counters', 'c_private']
-    exclude_false = ['c_read_timeout', 'c_pin_id', 'c_io_state',
-                     'c_currentber', 'c_pendingber', 'c_is_tls',
-                     'c_sasl_authctx', 'c_sasl_defaults', 'c_sasl_cbinding',
-                     'c_restricted', 'c_restricted_at',
-                     'c_restricted_inflight', 'c_backend', 'c_linked']
-    short = ['c_read_event', 'c_write_event', 'c_backend', 'c_linked']
+    exclude: ClassVar = [
+        "c_connid",
+        "c_destroy",
+        "c_unlink",
+        "c_txn",
+        "c_sb",
+        "c_starttime",
+        "c_activitytime",
+        "c_peer_name",
+        "c_vc_cookie",
+        "c_pdu_cb",
+        "c_needs_tls_accept",
+        "c_counters",
+        "c_private",
+    ]
+    exclude_false: ClassVar = [
+        "c_read_timeout",
+        "c_pin_id",
+        "c_io_state",
+        "c_currentber",
+        "c_pendingber",
+        "c_is_tls",
+        "c_sasl_authctx",
+        "c_sasl_defaults",
+        "c_sasl_cbinding",
+        "c_restricted",
+        "c_restricted_at",
+        "c_restricted_inflight",
+        "c_backend",
+        "c_linked",
+    ]
+    short: ClassVar = [
+        "c_read_event", "c_write_event", "c_backend", "c_linked",
+    ]
 
     def conn_type(self, value=None):
         value = value or self.value
@@ -242,10 +277,11 @@ class ConnectionPrinter(AnnotatedStructPrinter):
 
 
 class OperationPrinter(AnnotatedStructPrinter):
-    exclude = ['o_ber', 'o_request']
-    exclude_false = ['o_saved_msgid', 'o_last_response', 'o_freeing',
-                     'o_pin_id']
-    short = ['o_client', 'o_upstream']
+    exclude: ClassVar = ['o_ber', 'o_request']
+    exclude_false: ClassVar = [
+        "o_saved_msgid", "o_last_response", "o_freeing", "o_pin_id",
+    ]
+    short: ClassVar = ['o_client', 'o_upstream']
 
     def to_string(self):
         tag = int(self.value['o_tag'])

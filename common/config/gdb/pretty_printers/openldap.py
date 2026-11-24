@@ -12,6 +12,7 @@ from pretty_printers.common import (
     CollectionPrinter, AnnotatedStructPrinter, FlagsPrinter,
     target_type,
 )
+from typing import ClassVar
 
 
 class LockPrinter:
@@ -40,10 +41,9 @@ class LockPrinter:
             return "Invalid"
         if self.locked:
             if self.kind == 1:
-                return "Locked by LWP {self.owner}, " \
-                    "depth={self.locked}".format(self=self)
+                return f"Locked by LWP {self.owner}, depth={self.locked}"
             else:
-                return "Locked by LWP {self.owner}".format(self=self)
+                return f"Locked by LWP {self.owner}"
         return "Unlocked"
 
 
@@ -73,7 +73,7 @@ class RWLockPrinter:
 
     def to_string(self):
         if self.state == 3:
-            return "Locked for writing by LWP {self.writer}".format(self=self)
+            return f"Locked for writing by LWP {self.writer}"
         elif self.state == 0 and self.readers:
             return "Locked for reading"
         return "Unlocked"
@@ -97,7 +97,7 @@ class CondVarPrinter:
 
     def to_string(self):
         if self.waiters:
-            return "Has {} waiters".format(self.waiters)
+            return f"Has {self.waiters} waiters"
         return "Idle"
 
 
@@ -187,8 +187,8 @@ class AttrDescPrinter:
 
 class AttributePrinter(AnnotatedStructPrinter):
     """Pretty printer for Attribute"""
-    short = ['a_next']
-    exclude_false = ['a_flags', 'a_comp_data']
+    short: ClassVar = ['a_next']
+    exclude_false: ClassVar = ['a_flags', 'a_comp_data']
 
     def to_string(self):
         return self.value['a_desc']
@@ -226,10 +226,10 @@ class OCPrinter:
 
 class ModificationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Modification"""
-    exclude = ['sm_nvalues', 'sm_type']
-    exclude_false = ['sm_flags']
+    exclude: ClassVar = ['sm_nvalues', 'sm_type']
+    exclude_false: ClassVar = ['sm_flags']
 
-    op = {
+    op: ClassVar = {
         0x0: 'add',  # LDAP_MOD_ADD
         0x1: 'delete',  # LDAP_MOD_DELETE
         0x2: 'replace',  # LDAP_MOD_REPLACE
@@ -286,9 +286,9 @@ class ModificationsPrinter:
 
 class AVAPrinter(AnnotatedStructPrinter):
     """Pretty printer for AttributeAssertion"""
-    exclude_false = ['aa_cf']
+    exclude_false: ClassVar = ['aa_cf']
 
-    operator = {
+    operator: ClassVar = {
         0xa3: '=',   # LDAP_FILTER_EQUALITY
         0xa5: '>=',  # LDAP_FILTER_GE
         0xa6: '<=',  # LDAP_FILTER_LE
@@ -328,10 +328,13 @@ class AVAPrinter(AnnotatedStructPrinter):
 class FilterPrinter(AnnotatedStructPrinter):
     """Pretty printer for Filter"""
 
-    exclude_false = ['f_next']
-    short = ['f_next']
+    exclude_false: ClassVar = ['f_next']
+    short: ClassVar = ['f_next']
 
-    operator = {
+    UNDEFINED = 0x8000
+    SLAPD_FILTER_MASK = 0x7fff
+
+    operator: ClassVar = {
         0x0: ['SLAPD_FILTER_COMPUTED', '', 'f_un_result'],
         0xa0: ['LDAP_FILTER_AND', '&', 'f_un_complex'],
         0xa1: ['LDAP_FILTER_OR', '|', 'f_un_complex'],
@@ -350,16 +353,20 @@ class FilterPrinter(AnnotatedStructPrinter):
         self.value = value
 
     def to_string(self):
-        readable_name, _, _ = self.operator.get(int(self.value['f_choice']),
-                                                [None, None, None])
-        return readable_name
+        suffix = ""
+        choice = int(self.value['f_choice'])
+        if choice & FilterPrinter.UNDEFINED:
+            choice &= FilterPrinter.SLAPD_FILTER_MASK
+            suffix = " (UNDEFINED)"
+        readable_name, _, _ = self.operator.get(choice, [None, None, None])
+        return (readable_name or "") + suffix
 
     def children(self):
         result = self.children_dict()
-        choice = int(result.pop('f_choice'))
+        choice = int(result.pop('f_choice')) & FilterPrinter.SLAPD_FILTER_MASK
 
-        _, sigil, member = self.operator.get(choice,
-                                             [None, None, None])
+        _, _sigil, member = self.operator.get(choice,
+                                              [None, None, None])
 
         if member is not None:
             part = result['f_un']
@@ -429,7 +436,7 @@ class PoolPrinter:
         if state:
             state_string = "paused" if state == 2 else "pausing"
 
-        return "{}".format(state_string)
+        return f"{state_string}"
 
     def children(self):
         return {
@@ -442,9 +449,9 @@ class PoolPrinter:
 
 class DBPrinter(AnnotatedStructPrinter):
     """Pretty printer for BackendDB"""
-    include = ['be_rootdn', 'be_next']
+    include: ClassVar = ['be_rootdn', 'be_next']
 
-    flags = {
+    flags: ClassVar = {
         'NOLASTMOD': 0x0001,
         'NO_SCHEMA_CHECK': 0x0002,
         'HIDDEN': 0x0004,
@@ -487,9 +494,10 @@ class DBPrinter(AnnotatedStructPrinter):
         result.move_to_end('type', last=False)
 
         # TODO: use format_string(summary=True)?
-        #result['be_next'] = gdb.default_visualizer(
-        #    result['be_next']['stqe_next']).to_string()
-        result['be_next'] = result['be_next']['stqe_next'].format_string(summary=True)
+        # result['be_next'] = gdb.default_visualizer(
+        #     result['be_next']['stqe_next']).to_string()
+        result["be_next"] = result["be_next"]["stqe_next"].\
+            format_string(summary=True)
 
         flags = self.value['be_flags']
         if flags:
@@ -507,7 +515,7 @@ class DBPrinter(AnnotatedStructPrinter):
 
 class RetryInfo(AnnotatedStructPrinter):
     """Pretty printer for slap_retry_info_t"""
-    # exclude_false = ['ri_last']
+    # exclude_false: ClassVar = ['ri_last']
 
     def to_string(self):
         index = 0
@@ -522,14 +530,13 @@ class RetryInfo(AnnotatedStructPrinter):
             count = int(self.value['ri_num'][index])
 
             if count == -1:
-                component = "{}s".format(interval)
+                component = f"{interval}s"
                 if index == current_index:
                     component += " right now"
             elif not index and not used_up or index != current_index:
-                component = "{}*{}s".format(count, interval)
+                component = f"{count}*{interval}s"
             else:
-                component = "{}*{} ({} left)".format(count, interval,
-                                                     count - used_up)
+                component = f"{count}*{interval} ({count - used_up} left)"
 
             index += 1
             result.append(component)
@@ -556,7 +563,7 @@ class ResponseAttrFlags(FlagsPrinter):
 
 class ResultEntryPrinter(AnnotatedStructPrinter):
     """Pretty printer for rep_search_s"""
-    exclude_false = [
+    exclude_false: ClassVar = [
         'r_operational_attrs', 'r_attrs', 'r_v2ref'
     ]
 
@@ -578,11 +585,11 @@ class ResultEntryPrinter(AnnotatedStructPrinter):
 
 class SlapReplyPrinter(AnnotatedStructPrinter):
     """Pretty printer for SlapReply"""
-    exclude_false = [
+    exclude_false: ClassVar = [
         'sr_msgid', 'sr_matched', 'sr_text', 'sr_ref', 'sr_ctrls', 'sr_flags',
     ]
 
-    members = {
+    members: ClassVar = {
         0x61: ["Bind response", None],
         0x64: ["Search entry", 'sru_search'],
         0x73: ["Search reference", 'sru_search'],
@@ -596,7 +603,7 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
         0x79: ["Intermediate response", 'sru_extended'],
     }
 
-    types = {
+    types: ClassVar = {
         'REP_SEARCH': ["Search entry", 'sru_search'],
         'REP_SEARCHREF': ["Search reference", 'sru_search'],
         # TODO:
@@ -606,7 +613,7 @@ class SlapReplyPrinter(AnnotatedStructPrinter):
         # 'REP_GLUE_RESULT'
     }
 
-    result = {
+    result: ClassVar = {
         0x00: "SUCCESS",
         0x01: "OPERATIONS_ERROR",
         0x02: "PROTOCOL_ERROR",
@@ -783,10 +790,10 @@ class ConfigArgOps(enum.IntEnum):
 
 class ConfigTablePrinter(AnnotatedStructPrinter):
     """Pretty printer for ConfigTable"""
-    exclude = ['name']
-    exclude_false = ['length', 'attribute', 'ad']
+    exclude: ClassVar = ['name']
+    exclude_false: ClassVar = ['length', 'attribute', 'ad']
 
-    types = {
+    types: ClassVar = {
         ConfigArgTypes.ARG_INT: 'v_int',
         ConfigArgTypes.ARG_LONG: 'v_long',
         ConfigArgTypes.ARG_BER_LEN_T: 'v_ber_t',
@@ -851,12 +858,12 @@ class ConfigTablePrinter(AnnotatedStructPrinter):
 
 class ConfigArgsPrinter(AnnotatedStructPrinter):
     """Pretty printer for ConfigArgs"""
-    exclude = ['argv_size', 'tline', 'ca_op']
-    exclude_false = [
+    exclude: ClassVar = ['argv_size', 'tline', 'ca_op']
+    exclude_false: ClassVar = [
         'depth', 'rvalue_vals', 'rvalue_nvals', 'type',
         'be', 'bi', 'ca_entry', 'ca_op', 'ca_private',
     ]
-    short = ['be', 'bi', 'ca_desc']
+    short: ClassVar = ['be', 'bi', 'ca_desc']
 
     def __init__(self, value):
         if 'ca_desc' not in (f.name for f in target_type(value).fields()):
@@ -881,12 +888,12 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
             prefix += "Failed "
 
         if op == ConfigArgOps.SLAP_CONFIG_EMIT:
-            return "{}Emit {}".format(prefix, ad)
+            return f"{prefix}Emit {ad}"
 
         if op == ConfigArgOps.LDAP_MOD_DELETE:
-            string = "{}Delete {}".format(prefix, ad)
+            string = f"{prefix}Delete {ad}"
             if index != -1:
-                string += ": {}".format(self.value['line'])
+                string += f": {self.value['line']}"
             return string
 
         if op == ConfigArgOps.SLAP_CONFIG_ADD:
@@ -897,10 +904,9 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
                                          for i in range(self.value['argc']))
 
         if index == -1:
-            return "{}{}: {}".format(prefix, ad, line.string())
+            return f"{prefix}{ad}: {line.string()}"
 
-        return "{}{}: {} (added to index {})".format(
-                prefix, ad, line.string(), index)
+        return f"{prefix}{ad}: {line.string()} (added to index {index})"
 
     def children(self):
         result = self.children_dict()
@@ -936,16 +942,30 @@ class ConfigArgsPrinter(AnnotatedStructPrinter):
 
 class BindConfPrinter(AnnotatedStructPrinter):
     """Pretty printer for slap_bindconf"""
-    exclude_false = [
-        'sb_version', 'sb_timeout_api', 'sb_timeout_net', 'sb_tcp_user_timeout',
-        'sb_secprops',
-        'sb_tls_ctx', 'sb_tls_cert', 'sb_tls_key', 'sb_tls_cacert',
-        'sb_tls_cacertdir', 'sb_tls_reqcert', 'sb_tls_reqsan',
-        'sb_tls_cipher_suite', 'sb_tls_protocol_min', 'sb_tls_ecname',
-        'sb_tls_crlcheck', 'sb_tls_int_reqcert', 'sb_tls_int_reqsan',
-        'sb_tls_do_init',
+    exclude_false: ClassVar = [
+        "sb_version",
+        "sb_timeout_api",
+        "sb_timeout_net",
+        "sb_tcp_user_timeout",
+        "sb_secprops",
+        "sb_tls_ctx",
+        "sb_tls_cert",
+        "sb_tls_key",
+        "sb_tls_cacert",
+        "sb_tls_cacertdir",
+        "sb_tls_reqcert",
+        "sb_tls_reqsan",
+        "sb_tls_cipher_suite",
+        "sb_tls_protocol_min",
+        "sb_tls_ecname",
+        "sb_tls_crlcheck",
+        "sb_tls_int_reqcert",
+        "sb_tls_int_reqsan",
+        "sb_tls_do_init",
     ]
-    exclude_empty = ['sb_uri', 'sb_realm', 'sb_authcId', 'sb_authzId']
+    exclude_empty: ClassVar = [
+        "sb_uri", "sb_realm", "sb_authcId", "sb_authzId",
+    ]
 
     SB_TLS_DEFAULT = -1
 
@@ -958,10 +978,18 @@ class BindConfPrinter(AnnotatedStructPrinter):
         if int(result['sb_tls']) == self.SB_TLS_DEFAULT:
             result.pop('sb_tls')
 
-        if result['sb_method'] != self.BINDMECH_SASL:
+        method = result['sb_method']
+        if method == self.BINDMECH_SASL:
+            result['sb_method'] = 'sasl'
+        else:
+            if method == self.BINDMECH_SIMPLE:
+                result['sb_method'] = 'simple'
             for item in ('sb_saslmech', 'sb_secprops', 'sb_realm',
                          'sb_authcId', 'sb_authzId'):
                 result.pop(item, None)
+
+        if result.get('sb_cred', ''):
+            result['sb_cred'] = '<REDACTED>'
 
         for item in self.exclude_empty:
             if item in result and not self.value[item]['bv_val']:
@@ -972,8 +1000,8 @@ class BindConfPrinter(AnnotatedStructPrinter):
 
 class AuthorizationInformation(AnnotatedStructPrinter):
     """Pretty printer for AuthorizationInformation"""
-    exclude = ['sai_ndn']
-    exclude_false = [
+    exclude: ClassVar = ['sai_ndn']
+    exclude_false: ClassVar = [
         'sai_ssf', 'sai_transport_ssf', 'sai_tls_ssf', 'sai_sasl_ssf',
     ]
 
@@ -1000,18 +1028,77 @@ class KeepalivePrinter:
                         ('sk_idle', 'sk_probes', 'sk_interval'))
 
 
+@functools.cache
+def oid_reverse(oid):
+    om_entry = gdb.lookup_symbol('om_list')[0].value()['stqh_first']
+
+    prefix = ""
+    name = None
+    while om_entry:
+        oidmacro = om_entry
+        om_entry = om_entry['som_next']['stqe_next']
+        names = oidmacro['som_names']
+        if not names:
+            continue
+
+        candidate_name = names[0]['bv_val'].string()
+        candidate_oid = oidmacro['som_oid']['bv_val'].string()
+        if oid == candidate_oid:
+            # exact match, done
+            name = candidate_name
+            prefix = candidate_oid
+            break
+        if oid.startswith(candidate_oid + '.') and candidate_oid > prefix:
+            name = candidate_name
+            prefix = candidate_oid
+
+    if name:
+        remainder = oid.removeprefix(prefix)
+        if remainder.startswith('.'):
+            remainder = ":"+remainder.removeprefix(".")
+        return f"{name}{remainder}"
+    return oid
+
+
+def cid_map():
+    @functools.cache
+    def cid_map_(numcids):
+        result = {}
+        controls_list = gdb.lookup_symbol('controls_list')[0]\
+            .value()['slh_first']
+
+        while controls_list:
+            control = controls_list
+            controls_list = controls_list['sc_next']['sle_next']
+            name = oid_reverse(control['sc_oid'].string())
+            cid = int(control['sc_cid'])
+            if cid:
+                result[cid] = name
+
+        return result
+
+    numcids = gdb.lookup_symbol('num_known_controls')[0].value()
+    return cid_map_(numcids)
+
+
+class ControlFlags(FlagsPrinter):
+    CONTROL_CRITICAL = 0x3
+    CONTROL_NONCRITICAL = 0x2
+    CONTROL_IGNORED = 0x1
+
+
 class OperationPrinter(AnnotatedStructPrinter):
     """Pretty printer for Operation"""
-    exclude = ['o_hdr', 'o_ber', 'o_next']
-    exclude_false = [
+    exclude: ClassVar = ['o_hdr', 'o_ber', 'o_next']
+    exclude_false: ClassVar = [
         'o_abandon', 'o_cancel', 'o_groups', 'o_do_not_cache',
         'o_is_auth_check', 'o_dont_replicate', 'o_nocaching',
         'o_delete_glue_parent', 'o_no_schema_check', 'o_no_subordinate_glue',
         'o_controls', 'o_res_ber', 'o_ctrls', 'o_private',
     ]
-    short = ['o_bd']
+    short: ClassVar = ['o_bd']
 
-    members = {
+    members: ClassVar = {
         0x42: ["Unbind request", None],
         0x4a: ["Delete request", None],
         0x50: ["Abandon request", 'oq_abandon'],
@@ -1032,7 +1119,7 @@ class OperationPrinter(AnnotatedStructPrinter):
     def to_string(self):
         tag = int(self.value['o_tag'])
         result = self.members.get(tag,
-                                  ['Unknown request: 0x{:x}'.format(tag)])[0]
+                                  [f'Unknown request: 0x{tag:x}'])[0]
         result += " " + self.value['o_hdr']['oh_log_prefix'].string()
 
         if int(self.value['o_abandon']):
@@ -1062,12 +1149,28 @@ class OperationPrinter(AnnotatedStructPrinter):
         if int(result['o_req_dn']['bv_len']):
             result.pop('o_req_ndn')
 
+        controls = {}
+        for cid, value in enumerate(result['o_ctrlflag'].bytes):
+            if not value:
+                continue
+            name = cid_map().get(cid, "<unknown>")
+            if result['o_ctrls'] and result['o_ctrls'][cid]:
+                ctrl = result['o_ctrls'][cid]
+                controls[name] = (ControlFlags.to_string(value),
+                                  ctrl.format_string())
+            else:
+                controls[name] = ControlFlags.to_string(value)
+
+        # a nested printer support would have been really useful here
+        if controls:
+            result['controls'] = str(controls)
+
         return result.items()
 
 
 class RewriteRulePrinter(AnnotatedStructPrinter):
-    exclude = ['lr_regex', 'lr_flags', 'lr_mode']
-    short = ['lr_prev', 'lr_next']
+    exclude: ClassVar = ['lr_regex', 'lr_flags', 'lr_mode']
+    short: ClassVar = ['lr_prev', 'lr_next']
 
     def to_string(self):
         if not self.value['lr_pattern']:

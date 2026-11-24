@@ -119,6 +119,7 @@ class AnnotatedStructPrinter(StructPrinter):
 
         return result
 
+
 class FlagsPrinter(IntFlag):
     # TODO: allow setting up with prefix(es?) to remove from the returned names
 
@@ -131,7 +132,7 @@ class FlagsPrinter(IntFlag):
         # FIXME: hack to support python 3.6+
         if not value:
             import sys
-            if sys.version_info < (3,12):
+            if sys.version_info < (3, 12):
                 if value in cls._value2member_map_:
                     return cls(value).name.removeprefix(prefix)
             else:
