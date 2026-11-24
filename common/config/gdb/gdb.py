@@ -14,7 +14,20 @@ import pretty_printers
 import deadlock
 
 
-class ObjFileHandler(object):
+# We can't set scheduler-locking without a backend, so do this on the
+# first stop (only!)
+def _sl(event):
+    try:
+        gdb.execute("set scheduler-locking step", to_string=True)
+        gdb.events.stop.disconnect(_sl)
+    except gdb.error:
+        pass
+
+
+gdb.events.stop.connect(_sl)
+
+
+class ObjFileHandler:
     def __init__(self):
         self.loaded_modules = {}
         self.loaded_modules['gdb'] = None

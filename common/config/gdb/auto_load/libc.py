@@ -27,7 +27,7 @@ class LibCFrameFilter(helpers.FrameFilter):
     ]
     decorators = {
         '__assert_fail': AssertDecorator,
-        '__assert_fail_base': ignore,
+        '__assert_fail_base': AssertDecorator,
 
         'clone': ignore,
     }
