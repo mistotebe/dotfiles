@@ -22,7 +22,7 @@ if not path:
 
 repo = pygit2.repository.Repository(path)
 try:
-    onto = repo.revparse_single(options.target).oid
+    onto = repo.revparse_single(options.target).id
 except KeyError:
     raise SystemExit(f"Name {options.target!r} doesn't correspond to a valid "
                       "commit")
@@ -34,7 +34,7 @@ if not options.branch:
 branch = repo.branches[options.branch]
 
 if options.base:
-    base = repo.revparse_single(options.base).oid
+    base = repo.revparse_single(options.base).id
 else:
     base = repo.merge_base(branch.target, onto)
 
