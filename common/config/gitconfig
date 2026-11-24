@@ -6,10 +6,6 @@
 	name = Ondřej Kuzník
 	email = ondra@mistotebe.net
 	signingkey = CB61484B
-[merge]
-    tool = vimdiff
-[mergetool "vimdiff3"]
-    cmd = vim -f -d -c \"wincmd J\" \"$MERGED\" \"$LOCAL\" \"$BASE\" \"$REMOTE\"
 [alias]
     dir = "!pwd"
     wdiff = diff --color-words
@@ -19,6 +15,9 @@
     review = "!f() { branch=${1:-origin/master}; git log -p --reverse -w --color-words --word-diff --word-diff-regex='([a-zA-Z]+|[^[:space:]])' -C -M $branch..$@ ; }; f"
     flake = "!bash -c 'f() { if [ -e \"$1\" ]; then path=$1; shift; else path=$GIT_PREFIX; fi; vim -q <(flake8 \"${path}\" \"${@}\"); }; f \"${@}\"' --"
     rdiff = "!f() { git sxs \"$( cat \"$(git rev-parse --git-dir)/rebase-merge/stopped-sha\" )\" \"$GIT_PREFIX$1\" ; }; f"
+    unmerged = diff --name-only --diff-filter=U --relative
+[blame]
+    ignoreRevsFile = :(optional).git-blame-ignore-revs
 [push]
 	default = simple
 [pull]
@@ -46,3 +45,5 @@
     pushInsteadOf = "https://git.openldap.org/"
 [url "https://git.openldap.org/openldap"]
     insteadOf = "git://git.openldap.org"
+[core]
+	pager = less -FRX

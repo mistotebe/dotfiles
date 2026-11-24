@@ -33,12 +33,14 @@ set autoread
 set autochdir
 
 set number
+set nohlsearch
+set scrolloff=3
 "set wildmenu
 set expandtab
 set autoindent
 set linebreak
 set nojoinspaces
-set list listchars=tab:»·,trail:·,extends:…
+set list listchars=tab:»·,trail:·,nbsp:·,extends:…
 
 set display+=lastline
 set background=dark
@@ -50,6 +52,22 @@ set shiftround
 set wildmode=longest,list:longest,list:full
 set mouse=
 set clipboard=unnamedplus
+
+if $TERM =~ '256' || has('nvim')
+    let g:solarized_termcolors = 256
+    let g:solarized_termtrans = 1
+    let g:solarized_bold = 0
+    let g:solarized_underline = 1
+endif
+
+if &t_Co >= 256 || has('nvim')
+    " If truecolour support is enabled, neovim switches to using guifg/bg
+    " colours which are not defined by solarized in this combination ATM.
+    set notermguicolors
+    silent! colorscheme solarized
+endif
+
+""" Key Mappings
 
 "analogous to D
 nnoremap Y y$
@@ -65,11 +83,11 @@ nmap # #zz
 nmap g* g*zz
 nmap g# g#zz
 
-"continue on new line
-inoremap <A-Space> <C-O>o
+imap     <C-BS> <C-W>
 inoremap <C-F> <C-O>zc
 inoremap <C-G> <C-O>zo
-imap     <C-BS> <C-W>
+"continue on new line
+inoremap <A-Space> <C-O>o
 
 "tab handling
 nnoremap <M-Right>  :tabnext<CR>
@@ -77,90 +95,16 @@ nnoremap <M-Left>   :tabprev<CR>
 nnoremap <M-Up>     <C-w>w
 nnoremap <M-Down>   <C-w>W
 
-" Colorscheme
-if $TERM =~ '256'
-    let g:solarized_termcolors = 256
-    let g:solarized_termtrans = 1
-    let g:solarized_bold = 0
-    let g:solarized_underline = 1
-endif
-if &t_Co >= 256
-    colorscheme solarized
-endif
-
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 2
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-
-"let g:syntastic_c_checkers = ['clang_check', 'make']
-let g:syntastic_c_checkers = []
-
-let g:syntastic_c_clang_check_args="-analyze -extra-arg -Xanalyzer -extra-arg -analyzer-output=text"
-let g:syntastic_c_clang_check_post_args = ""
-
-let g:syntastic_python_checkers = ['python3']
-
-augroup syntax
-    au! BufNewFile,BufReadPost *.smv
-    autocmd  BufNewFile,BufReadPost *.smv  so ~/.vimrc.cadsmv.vim
-augroup END
-
-set foldmethod=syntax
-autocmd  BufNewFile,BufReadPost *.sh   setlocal foldmethod=marker
-autocmd  BufNewFile,BufReadPost *.py   setlocal foldmethod=indent
-let python_highlight_all=1
-
-let g:xml_syntax_folding=1
-
-let g:detectindent_preferred_indent = 4
-let g:detectindent_preferred_when_mixed = 1
-
-autocmd  BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex  setlocal textwidth=80
-autocmd  BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex  setlocal foldmethod=manual
-autocmd  BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex  setlocal spell
-
-autocmd  FileType tex setlocal ts=2
-autocmd  FileType tex setlocal sw=2
-
-autocmd  BufNewFile,BufReadPost diary.txt     inoremap <C-T> <C-R>=strftime("%H.%M")<CR>
-autocmd  BufNewFile,BufReadPost diary.txt     setlocal textwidth=0
-autocmd  BufNewFile,BufReadPost diary.txt     highlight Done ctermbg=22
-autocmd  BufNewFile,BufReadPost diary.txt     highlight Todo ctermbg=136
-autocmd  BufNewFile,BufReadPost diary.txt     highlight Todo ctermfg=15
-autocmd  BufNewFile,BufReadPost diary.txt     highlight SpellBad ctermbg=88
-autocmd  BufNewFile,BufReadPost diary.txt     call matchadd('Done', '✓.*')
-autocmd  BufNewFile,BufReadPost diary.txt     call matchadd('Todo', '→.*')
-
-autocmd  BufNewFile,BufReadPost *.py          inoremap <C-T> import ipdb; ipdb.set_trace()
-autocmd  BufNewFile,BufReadPost *.js          inoremap <C-T> debugger;
-
-
-autocmd  BufNewFile,BufReadPost *.log         setlocal hlsearch
-
-autocmd  BufNewFile,BufReadPost *.c,*.h,*.sh  :DetectIndent
-
-let g:tex_flavor='latex'
-let g:Tex_DefaultTargetFormat = "pdf"
-
-" Reread configuration of Vim if .vimrc is saved
-augroup VimConfig
-    au!
-    autocmd BufWritePost ~/.vimrc       so ~/.vimrc
-    autocmd BufWritePost vimrc          so ~/.vimrc
-augroup END
-
-autocmd FileType help nnoremap <buffer> <CR> <C-]>
-autocmd FileType help nnoremap <buffer> <BS> <C-T>
-autocmd FileType help setlocal nospell
-
-autocmd FileType xml let b:surround_45 = "<!-- \r -->"
-autocmd FileType mail setlocal spell
-
-autocmd FileType markdown setlocal spell
-autocmd FileType markdown setlocal textwidth=80
-
-autocmd FileType yaml setlocal shiftwidth=2
+" Meta-Up/Down - previous/next window
+nnoremap <M-Up> <C-W>W
+inoremap <M-Up> <C-O><C-W>W
+nnoremap <M-Down> <C-W>w
+inoremap <M-Down> <C-O><C-W>w
+" Meta-Left/Right - previous/next tab
+nnoremap <M-Left> gT
+inoremap <M-Left> <C-O>gT
+nnoremap <M-Right> gt
+inoremap <M-Right> <C-O>gt
 
 " Programming Keys:
 "   F9  = Make
@@ -181,27 +125,62 @@ inoremap <F5> <C-O>:w<CR><C-O>:!%:p<CR>
 nnoremap <F12> :syntax sync fromstart<CR>
 inoremap <F12> <C-O>:syntax sync fromstart<CR>
 
-" Meta-Up/Down - previous/next window
-nnoremap <M-Up> <C-W>W
-inoremap <M-Up> <C-O><C-W>W
-nnoremap <M-Down> <C-W>w
-inoremap <M-Down> <C-O><C-W>w
-" Meta-Left/Right - previous/next tab
-nnoremap <M-Left> gT
-inoremap <M-Left> <C-O>gT
-nnoremap <M-Right> gt
-inoremap <M-Right> <C-O>gt
+set foldmethod=syntax
 
-" run pdflatex
-augroup Execution
+augroup FoldSettings
+    au!
+    autocmd BufNewFile,BufReadPost *.sh setlocal foldmethod=marker
+    autocmd BufNewFile,BufReadPost *.py setlocal foldmethod=indent
+augroup END
+
+let python_highlight_all=1
+let g:xml_syntax_folding=1
+
+let g:detectindent_preferred_indent = 4
+let g:detectindent_preferred_when_mixed = 1
+
+autocmd BufNewFile,BufReadPost *.c,*.h,*.sh :DetectIndent
+
+autocmd BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex setlocal textwidth=80
+autocmd BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex setlocal foldmethod=manual
+autocmd BufNewFile,BufReadPost *.txt,*.md,*.rst,*.tex setlocal spell
+
+augroup DiarySettings
+    au!
+    autocmd BufNewFile,BufReadPost diary.txt inoremap <C-T> <C-R>=strftime("%H.%M")<CR>
+    autocmd BufNewFile,BufReadPost diary.txt setlocal textwidth=0
+    autocmd BufNewFile,BufReadPost diary.txt highlight Done ctermbg=22
+    autocmd BufNewFile,BufReadPost diary.txt highlight Todo ctermbg=136 ctermfg=15
+    autocmd BufNewFile,BufReadPost diary.txt highlight SpellBad ctermbg=88
+    autocmd BufNewFile,BufReadPost diary.txt call matchadd('Done', '✓.*')
+    autocmd BufNewFile,BufReadPost diary.txt call matchadd('Todo', '→.*')
+augroup END
+
+autocmd BufNewFile,BufReadPost *.py inoremap <C-T> breakpoint()
+autocmd BufNewFile,BufReadPost *.js inoremap <C-T> debugger;
+
+autocmd BufNewFile,BufReadPost *.log setlocal hlsearch
+
+let g:tex_flavor='latex'
+let g:Tex_DefaultTargetFormat = "pdf"
+
+autocmd FileType tex setlocal ts=2 sw=2
+augroup LatexExecution
     au!
     au FileType tex inoremap <F5> <C-O>:w<CR><C-O>:!pdflatex %:p<CR><CR>
     au FileType tex nnoremap <F5> :w<CR>:!pdflatex %:p<CR><CR>
 augroup END
 
+autocmd FileType help nnoremap <buffer> <CR> <C-]>
+autocmd FileType help nnoremap <buffer> <BS> <C-T>
+autocmd FileType help setlocal nospell
+autocmd FileType mail setlocal spell
+autocmd FileType markdown setlocal spell textwidth=80
+autocmd FileType xml let b:surround_45 = "<!-- \r -->"
+autocmd FileType yaml setlocal shiftwidth=2
+
 " automatically give executable permissions if file begins with #! and contains
 " '/bin/' in the path
-
 function! ModeChange()
   if getline(1) =~ "^#!"
     if getline(1) =~ "/bin/"
@@ -218,9 +197,6 @@ hi cCommentString ctermfg=30
 " make diff highlight actually usable
 hi DiffChange ctermbg=235
 hi DiffText ctermbg=52
-
-"let g:clang_library_path="/usr/lib/x86_64-linux-gnu/"
-let g:clang_library_path="/usr/lib/llvm-3.6/lib/"
 
 set tags=./tags,./TAGS,tags,TAGS,.tags,./.tags,./.git/tags,.git/tags
 set wildignore=*~,*.jpg,*.out,*.png,*.pdf,*.ps,*.gif,*.bmp,*.jpeg,*.tgz,*.tbz,*gz,*.bz2,*.zip,*.tif,*.xcf,*.doc,*.o,*.lo,*.la,*.pyc

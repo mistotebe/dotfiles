@@ -32,6 +32,7 @@ set wait_key=no
 set nomark_old
 set noconfirmappend
 set fcc_clear
+set sort=threads
 set sort_aux=last-date-received
 set uncollapse_jump
 unset digest_collapse
@@ -58,6 +59,7 @@ set sidebar_divider_char='┃'
 set sidebar_sort_method=alpha
 
 set mail_check_stats=yes
+#set sidebar_format="%B%*  %S%?N?(%N)?%?F?[%F]?"
 set sidebar_format="%B%* %?F?%F:?%?N?%N/?%S"
 set sidebar_indent_string=" "
 set sidebar_folder_indent=yes
